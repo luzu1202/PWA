@@ -73,11 +73,11 @@ Define la página en español con encabezado, presentación, filtros, campo de b
 
 ### 6.2 `styles.css`
 
-Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido.
+Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. La descripción del hero usa Buttermilk para mantener contraste sobre el fondo azul. La ilustración se reemplazó por una fotografía Unsplash de pastel de chocolate. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido.
 
 ### 6.3 `script.js`
 
-Implementa ocho recetas exclusivamente dulces, filtros y búsqueda inmediata, favoritos persistentes, instrucciones detalladas, temporizador ajustable por minuto, modo cocina y registro del Service Worker. Cada tarjeta y detalle presentan el tiempo total estimado; las esperas de refrigeración y reposo quedan descritas aparte del temporizador de la fase activa. El tiempo se puede ajustar antes de iniciar o al pausarlo y se calcula desde una hora objetivo para evitar deriva en segundo plano. Las recetas sin cocción cronometrada admiten un temporizador opcional. Las duraciones se muestran en español como minutos u horas y minutos. El modo cocina solicita Screen Wake Lock cuando el navegador lo admite; en otros casos explica la limitación y conserva el modo visual.
+Implementa ocho recetas exclusivamente dulces, filtros y búsqueda inmediata, favoritos persistentes, instrucciones detalladas, temporizador ajustable por minuto, modo cocina y registro del Service Worker. La receta del flan incluye una fotografía Unsplash de flan con caramelo. Cada tarjeta y detalle presentan el tiempo total estimado; las esperas de refrigeración y reposo quedan descritas aparte del temporizador de la fase activa. El tiempo se puede ajustar antes de iniciar o al pausarlo y se calcula desde una hora objetivo para evitar deriva en segundo plano. Las recetas sin cocción cronometrada admiten un temporizador opcional. Las duraciones se muestran en español como minutos u horas y minutos. El modo cocina solicita Screen Wake Lock cuando el navegador lo admite; en otros casos explica la limitación y conserva el modo visual.
 
 ### 6.4 `manifest.json`
 
@@ -120,12 +120,12 @@ Los resultados se describen a partir de las funciones implementadas y de las ver
 | Modo cocina | Implementado; la retención de pantalla utiliza Screen Wake Lock cuando el navegador la admite |
 | Manifiesto con modo `standalone` e icono | Implementado |
 | Registro y control del Service Worker | Verificados en `localhost`; Service Worker activo y controlando la página |
-| Actualización del shell tras el cambio del temporizador | Versión de caché del Service Worker incrementada a `dulce-pausa-v2` |
+| Actualización del shell tras el cambio del temporizador y las imágenes | Versión de caché del Service Worker incrementada a `dulce-pausa-v4` |
 | Publicación en GitHub Pages | Verificada: respuesta HTTP 200 en [Dulce Pausa](https://luzu1202.github.io/PWA/) |
 | Workflow de GitHub Actions | Ejecución [37095116436](https://github.com/luzu1202/PWA/actions/runs/37095116436) completada correctamente; validación y despliegue exitosos |
 | Instalación del Service Worker en GitHub Pages | Verificada: scope `https://luzu1202.github.io/PWA/`, control activo y cachés con 7 recursos esenciales y 8 fotografías |
 | Caché de shell y respuesta offline | Verificados: recarga sin red muestra la aplicación, 8 tarjetas y estilos aplicados |
-| Caché de fotografías | Verificada: 8 imágenes precargadas y las 8 visibles tras recargar sin red |
+| Caché de fotografías en la versión desplegada previamente | Verificada: 8 imágenes precargadas y las 8 visibles tras recargar sin red |
 | Lighthouse / métricas de rendimiento | No ejecutado; no se reportan puntuaciones sintéticas |
 
 El Service Worker no puede operar al abrir `index.html` directamente mediante `file://`; debe servirse desde `localhost` o HTTPS. Las fotos quedan disponibles offline cuando la precarga o una visita online logra almacenarlas; para cada fallo se conserva un SVG local de respaldo. La prueba offline se ejecutó en `localhost` con la red del navegador deshabilitada después de cargar la aplicación.
@@ -133,6 +133,8 @@ El Service Worker no puede operar al abrir `index.html` directamente mediante `f
 ### 7.3 Auditoría de código y conclusiones
 
 La arquitectura evita dependencias de ejecución y limita el registro persistente a identificadores de favoritos. El catálogo carga imágenes de forma diferida; la instalación precarga las fotografías en paralelo sin permitir que un error externo impida guardar el shell. Los recursos esenciales tienen una estrategia offline explícita. El CSS se adapta a móviles y teclado, la lista se actualiza sin recargar la página y el temporizador se detiene al cerrar la receta. Se confirmó en navegador el registro y control del Service Worker en localhost y Pages, la carga de las ocho imágenes almacenadas y la navegación sin red en localhost. Lighthouse y la instalación en un dispositivo físico no se ejecutaron, por lo que no se atribuyen puntuaciones ni resultados de esos entornos. La auditoría técnica se documenta en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
+
+En la última revisión local se verificó el texto Buttermilk sobre el hero Midnight Blue con contraste 10.06:1, ambas fotografías nuevas de Unsplash con respuesta JPEG y visualización correcta, y la precarga de sus identificadores bajo la versión `dulce-pausa-v4`. Estos cambios permanecen locales; no se ha ejecutado un nuevo despliegue.
 
 ## 8. Resumen
 

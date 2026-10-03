@@ -49,7 +49,7 @@ const recipes = [
   {
     id: "flan", name: "Flan de caramelo", category: "Tradicionales", time: 195, difficulty: "Fácil",
     description: "El postre de siempre: delicado, cremoso y bañado en caramelo casero. Considera al menos 2 horas de refrigeración después de hornearlo y enfriarlo.",
-    image: image("photo-1470324161839-ce2bb6fa6bc3"), timerMinutes: 50, timerLabel: "Horneado a baño maría",
+    image: image("photo-1653988354010-39637252a2db"), timerMinutes: 50, timerLabel: "Horneado a baño maría",
     ingredients: ["150 g de azúcar para el caramelo", "500 ml de leche entera", "4 huevos", "100 g de azúcar", "1 cucharadita de vainilla", "1 pizca de sal"],
     steps: ["Precalienta el horno a 160 °C. Calienta el azúcar en una sartén hasta obtener un caramelo ámbar y repártelo en el fondo de seis flaneras.", "Entibia la leche sin dejar que hierva. Bate los huevos con el azúcar, la vainilla y la sal.", "Vierte la leche poco a poco sobre los huevos mientras mezclas. Cuela la preparación y llena los moldes.", "Coloca los moldes en una fuente con agua caliente hasta la mitad y hornea 45–50 minutos. Deja enfriar unos 10 minutos y refrigera al menos 2 horas antes de desmoldar."]
   },

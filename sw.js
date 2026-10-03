@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "dulce-pausa-v3";
+const CACHE_VERSION = "dulce-pausa-v4";
 const APP_CACHE = `${CACHE_VERSION}-app`;
 const PHOTO_CACHE = `${CACHE_VERSION}-photos`;
 const FALLBACK_IMAGE = "./assets/postre-placeholder.svg";
@@ -16,11 +16,12 @@ const APP_ASSETS = [
 const DESSERT_PHOTOS = [
   "photo-1571877227200-a0d98ea607e9",
   "photo-1606313564200-e75d5e30476c",
+  "photo-1578985545062-69928b1d9587",
   "photo-1519915028121-7d3463d20b13",
   "photo-1533134242443-d4fd215305ad",
   "photo-1624371414361-e670edf4898d",
   "photo-1499636136210-6f4ee915583e",
-  "photo-1470324161839-ce2bb6fa6bc3",
+  "photo-1653988354010-39637252a2db",
   "photo-1568571780765-9276ac8b75a2"
 ].map((id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=82`);
 

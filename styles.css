@@ -61,15 +61,7 @@ h1, h2, h3, p { margin-top: 0; }
 .hero-link span { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid rgb(255 242 186 / 66%); border-radius: 50%; font-size: 15px; }
 .hero-art { position: relative; min-height: 300px; display: grid; place-items: center; }
 .hero-art::before { content: ""; position: absolute; width: 290px; height: 290px; border-radius: 50%; background: #f7dfd3; }
-.hero-cake { position: relative; z-index: 1; width: 242px; height: 164px; transform: rotate(-4deg); filter: drop-shadow(0 20px 12px rgb(89 48 54 / 13%)); }
-.cake-cream, .cake-layer, .cake-bottom { position: absolute; display: block; left: 9px; width: 224px; }
-.cake-cream { top: 27px; height: 55px; border-radius: 50%; background: #fff9ee; border: 3px solid #ebc8ba; }
-.cake-layer { top: 54px; height: 60px; border-radius: 0 0 50% 50%; background: linear-gradient(90deg, #a44f50, #c37464 50%, #9c454c); border: 2px solid #8f4148; }
-.cake-bottom { top: 94px; height: 51px; border-radius: 0 0 50% 50%; background: #f2ccaa; border-bottom: 8px solid #d8a783; }
-.cake-bottom::after { content: ""; position: absolute; left: 0; right: 0; top: -10px; height: 20px; border-radius: 50%; background: #fff7e9; border: 2px solid #e6bcae; }
-.cake-berry { position: absolute; z-index: 2; display: block; width: 16px; height: 18px; border-radius: 50% 50% 45% 45%; background: #a83f55; }
-.cake-berry::after { content: "✦"; position: absolute; top: -7px; left: 3px; color: #718854; font-size: 10px; }
-.berry-one { top: 22px; left: 78px; transform: rotate(-20deg); }.berry-two { top: 30px; left: 119px; }.berry-three { top: 20px; left: 157px; transform: rotate(20deg); }
+.hero-dessert-photo { position: relative; z-index: 1; width: min(100%, 420px); height: 280px; border: 8px solid var(--surface-raised); border-radius: 45% 45% 10px 10px; background: var(--surface-color); box-shadow: 0 22px 50px rgb(7 31 52 / 25%); object-fit: cover; transform: rotate(2deg); }
 .hero-stamp { position: absolute; z-index: 2; top: 20px; left: calc(50% - 145px); width: 73px; height: 73px; display: grid; place-content: center; transform: rotate(-12deg); border: 1px solid #ca8a82; border-radius: 50%; color: #a65e69; text-align: center; font-size: 9px; font-weight: 700; line-height: 1.5; letter-spacing: 1px; }
 .hero-sprinkle { position: absolute; color: var(--rose); font-family: Georgia, serif; }.sprinkle-one { top: 50px; right: 13%; font-size: 28px; }.sprinkle-two { bottom: 47px; left: 17%; font-size: 38px; }.sprinkle-three { top: 105px; left: 12%; font-size: 19px; }
 
@@ -135,13 +127,7 @@ body { background-color: var(--bg-color); }
 .site-header, .catalog-section, .site-footer { background: var(--surface-raised); }
 .site-header, .site-footer { border-color: var(--line-color); }
 .hero .eyebrow { color: var(--bg-color); }
-.hero-art::before { background: rgb(255 242 186 / 18%); }
 .hero-stamp { border-color: var(--bg-color); color: var(--bg-color); }
-.cake-cream, .cake-bottom::after { background: var(--surface-raised); border-color: var(--bg-color); }
-.cake-layer { background: linear-gradient(90deg, var(--primary-deep), #27618a 50%, var(--primary-color)); border-color: var(--primary-deep); }
-.cake-bottom { background: #f2d878; border-bottom-color: #d3ad4f; }
-.cake-berry { background: var(--accent-color); }
-.cake-berry::after { color: var(--bg-color); }
 .hero-sprinkle { color: var(--bg-color); }
 .search-field, .recipe-card, .favorites-toggle, .icon-button, .timer-minutes-field input, .timer-adjust-button, .timer-button:not(.primary) { background-color: var(--surface-raised); }
 .search-field, .recipe-card, .timer-panel, .timer-minutes-field input, .timer-adjust-button, .timer-button:not(.primary) { border-color: var(--line-color); }
@@ -160,7 +146,8 @@ body { background-color: var(--bg-color); }
 .connection-status { color: var(--muted-color); }
 .status-dot { background: #4b916d; box-shadow: 0 0 0 3px #e5f0d3; }
 .connection-status.offline .status-dot { background: var(--accent-color); box-shadow: 0 0 0 3px var(--accent-soft); }
-.header-note, .connection-status, .hero-description, .results-summary, .card-description, .card-meta, .detail-description, .detail-time-total small, .timer-description, .site-footer, .offline-note p { color: var(--muted-color); }
+.header-note, .connection-status, .results-summary, .card-description, .card-meta, .detail-description, .detail-time-total small, .timer-description, .site-footer, .offline-note p { color: var(--muted-color); }
+.hero .hero-description { color: var(--bg-color); }
 .eyebrow, .sparkle, .search-icon, .card-meta span:first-child::before, .text-button { color: var(--accent-color); }
 .card-category { background: rgb(255 249 223 / 95%); color: var(--primary-color); }
 .favorite-button[aria-pressed="true"] { color: var(--primary-color); }
@@ -180,7 +167,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline-color: var(
 }
 @media (max-width: 620px) {
   .site-header { height: 65px; padding: 0 19px; }.header-note { display: none; }.connection-status { font-size: 9px; }
-  .hero { min-height: 0; grid-template-columns: 1fr; padding: 52px 25px 26px; }.hero-copy { position: relative; z-index: 2; }.hero h1 { font-size: 51px; }.hero-description { max-width: 410px; font-size: 12px; }.hero-art { min-height: 220px; margin-top: 2px; }.hero-art::before { width: 210px; height: 210px; }.hero-cake { transform: scale(.82) rotate(-4deg); }.hero-stamp { top: 6px; left: calc(50% - 120px); transform: scale(.8) rotate(-12deg); }.sprinkle-one { top: 18px; right: 14%; }.sprinkle-two { bottom: 20px; left: 12%; }.sprinkle-three { top: 80px; left: 10%; }
+  .hero { min-height: 0; grid-template-columns: 1fr; padding: 52px 25px 26px; }.hero-copy { position: relative; z-index: 2; }.hero h1 { font-size: 51px; }.hero-description { max-width: 410px; font-size: 12px; }.hero-art { min-height: 220px; margin-top: 2px; }.hero-art::before { width: 210px; height: 210px; }.hero-dessert-photo { width: min(84vw, 350px); height: 220px; border-width: 6px; }.hero-stamp { top: 6px; left: calc(50% - 120px); transform: scale(.8) rotate(-12deg); }.sprinkle-one { top: 18px; right: 14%; }.sprinkle-two { bottom: 20px; left: 12%; }.sprinkle-three { top: 80px; left: 10%; }
   .catalog-section { padding: 48px 18px 44px; }.section-heading { align-items: flex-start; flex-direction: column; margin-bottom: 20px; gap: 14px; }.section-heading h2 { font-size: 30px; }.favorites-toggle { align-self: flex-start; }.catalog-tools { gap: 13px; }.search-field { width: 100%; }.search-field kbd { display: none; }.category-filters { gap: 5px; }.filter-chip { padding: 8px 10px; font-size: 9px; }.recipe-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 10px; }.card-image-wrap { height: clamp(116px, 39vw, 170px); }.card-body { padding: 12px 10px; }.card-title { font-size: 16px; }.card-description { min-height: 45px; font-size: 9px; }.card-meta { font-size: 8px; }.card-open { font-size: 9px; }
   .offline-note { margin: 0 18px 38px; padding: 15px; gap: 10px; }.offline-note strong { font-size: 13px; }.offline-note p { max-width: 205px; font-size: 9px; }.offline-badge { display: none; }.site-footer { min-height: 80px; padding: 17px 18px; gap: 10px; font-size: 9px; }.site-footer p { display: none; }
   .dialog-content { padding: 17px 18px 24px; }.detail-hero { grid-template-columns: 1fr; gap: 16px; }.detail-image { height: 190px; }.detail-title { font-size: 29px; }.recipe-columns { grid-template-columns: 1fr; gap: 24px; margin-top: 23px; }

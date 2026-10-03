@@ -19,6 +19,8 @@ Revisión estática de HTML, CSS, JavaScript, manifiesto, Service Worker y workf
 | Baja | Las ocho fotos se sirven desde Unsplash. La aplicación intenta precargarlas y almacena las respuestas que consigue, pero no puede garantizar esas fotos sin conexión si la instalación ocurre sin acceso al proveedor. | El contenido de las recetas sigue accesible; puede mostrarse el SVG local de respaldo en lugar de una fotografía no almacenada. | Si se requiere independencia absoluta de terceros, incorporar las fotografías al repositorio y precargar archivos locales. |
 | Baja | El manifiesto proporciona iconos SVG, sin variantes PNG de 192 y 512 píxeles. | La instalación funciona en el navegador probado, pero algunos sistemas instalables antiguos pueden preferir iconos rasterizados. | Añadir variantes PNG si se necesita ampliar compatibilidad de instalación. |
 | Baja | La búsqueda compara texto en minúsculas, pero no normaliza diacríticos. | Buscar `limon` no coincide con `limón` si la tilde forma parte del contenido coincidente. | Normalizar acentos en la consulta y los campos indexados si se desea búsqueda tolerante a tildes. |
+| Corregido | Una regla CSS tardía volvía a colorear el párrafo del hero con el tono apagado usado sobre fondos claros. | El texto perdía contraste sobre la portada Midnight Blue. | `.hero .hero-description` establece Buttermilk (`#FFF2BA`) con mayor especificidad. |
+| Corregido | El hero usaba una ilustración de pastel y la receta del flan cargaba una foto que no correspondía al plato. | La imagen principal no mostraba claramente un postre de chocolate y la foto del flan era engañosa. | Se reemplazaron por fotografías Unsplash de pastel de chocolate y flan con caramelo; ambas se incorporan a la precarga del Service Worker. |
 
 No se identificaron hallazgos de prioridad alta o crítica durante esta revisión funcional. Esta observación no equivale a una auditoría de seguridad especializada.
 
@@ -33,7 +35,10 @@ No se identificaron hallazgos de prioridad alta o crítica durante esta revisió
 - El tiempo se actualiza contra una hora de finalización, evitando perder precisión cuando el navegador limita los intervalos en segundo plano.
 - La duración estimada aparece en las tarjetas y en el detalle, con horas y minutos legibles y las esperas descritas fuera del temporizador de cocción.
 - El tema usa variables CSS Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`); la tipografía combina Poppins, Playfair Display y Great Vibes con alternativas locales para modo offline.
-- El manifiesto, el color del navegador, el icono y la caché versionada se alinearon con la nueva paleta. La versión de caché es `dulce-pausa-v3`.
+- El párrafo del hero conserva texto Buttermilk sobre fondo Midnight Blue. El contraste calculado de esos colores supera WCAG AA para texto normal.
+- La imagen del hero es una fotografía de pastel de chocolate; la del flan muestra flan con caramelo. Se verificaron ambas URL de Unsplash con respuesta de imagen.
+- El manifiesto, el color del navegador, el icono y la caché versionada se alinearon con la nueva paleta. La versión de caché es `dulce-pausa-v4`.
+- En la última verificación local ambas nuevas imágenes respondieron `200 image/jpeg`, el hero y el detalle del flan las cargaron en navegador y el texto del hero alcanzó un contraste calculado de `10.06:1`.
 - En `localhost`, recargar sin conexión conservó el catálogo, los estilos y ocho fotografías previamente almacenadas.
 - En GitHub Pages se observó HTTP 200, ocho tarjetas, Service Worker activo y controlador, scope `https://luzu1202.github.io/PWA/`, siete entradas en caché de aplicación y ocho en caché de fotografías.
 - GitHub Actions [run 37095116436](https://github.com/luzu1202/PWA/actions/runs/37095116436): validación y despliegue completados con éxito.
@@ -45,10 +50,10 @@ No se identificaron hallazgos de prioridad alta o crítica durante esta revisió
 - Las familias Poppins, Playfair Display y Great Vibes se solicitan a Google Fonts; si no están disponibles, se utilizan las familias de reserva del sistema.
 - La interfaz ofrece etiquetas accesibles, foco visible, estados de botones y adaptación a movimiento reducido.
 - Los recursos esenciales se cachean antes de activar la nueva versión; la precarga remota de imágenes tolera fallos y no bloquea el shell.
-- La caché del Service Worker sube a `dulce-pausa-v2` junto con la refactorización, para actualizar los recursos guardados por instalaciones anteriores.
+- La caché del Service Worker se versiona como `dulce-pausa-v4` para renovar los recursos y fotografías en instalaciones anteriores.
 - El modo cocina usa Screen Wake Lock cuando está disponible y comunica la limitación cuando el navegador no lo permite.
 - Lighthouse y la instalación física no se ejecutaron; no se reportan puntuaciones ni compatibilidad fuera del navegador probado.
 
 ## Conclusión
 
-La aplicación está desplegada y lista para pruebas en GitHub Pages. El funcionamiento offline de la estructura y de los recursos ya almacenados está verificado en localhost; las recomendaciones de baja prioridad describen mejoras de compatibilidad y autonomía, no impedimentos para probar la versión actual.
+La versión anterior de la aplicación está desplegada en GitHub Pages. Los arreglos del contraste y las fotografías fueron verificados en la copia local con respuestas de imagen correctas; no se han desplegado. El funcionamiento offline de la estructura y de los recursos ya almacenados está verificado en localhost; las recomendaciones de baja prioridad describen mejoras de compatibilidad y autonomía, no impedimentos para probar la versión actual.
