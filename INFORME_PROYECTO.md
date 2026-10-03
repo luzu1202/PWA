@@ -115,6 +115,9 @@ Los resultados se describen a partir de las funciones implementadas y de las ver
 | Modo cocina | Implementado; la retención de pantalla utiliza Screen Wake Lock cuando el navegador la admite |
 | Manifiesto con modo `standalone` e icono | Implementado |
 | Registro y control del Service Worker | Verificados en `localhost`; Service Worker activo y controlando la página |
+| Publicación en GitHub Pages | Verificada: respuesta HTTP 200 en [Dulce Pausa](https://luzu1202.github.io/PWA/) |
+| Workflow de GitHub Actions | Ejecución [37095116436](https://github.com/luzu1202/PWA/actions/runs/37095116436) completada correctamente; validación y despliegue exitosos |
+| Instalación del Service Worker en GitHub Pages | Verificada: scope `https://luzu1202.github.io/PWA/`, control activo y cachés con 7 recursos esenciales y 8 fotografías |
 | Caché de shell y respuesta offline | Verificados: recarga sin red muestra la aplicación, 8 tarjetas y estilos aplicados |
 | Caché de fotografías | Verificada: 8 imágenes precargadas y las 8 visibles tras recargar sin red |
 | Lighthouse / métricas de rendimiento | No ejecutado; no se reportan puntuaciones sintéticas |
@@ -123,7 +126,7 @@ El Service Worker no puede operar al abrir `index.html` directamente mediante `f
 
 ### 7.3 Auditoría de código y conclusiones
 
-La arquitectura evita dependencias de ejecución y limita el registro persistente a identificadores de favoritos. El catálogo carga imágenes de forma diferida; la instalación precarga las fotografías en paralelo sin permitir que un error externo impida guardar el shell. Los recursos esenciales tienen una estrategia offline explícita. El CSS se adapta a móviles y teclado, la lista se actualiza sin recargar la página y el temporizador se detiene al cerrar la receta. Se confirmó en navegador el registro del Service Worker, la carga de las ocho imágenes almacenadas y la navegación sin red. Lighthouse y la instalación en un dispositivo físico no se ejecutaron, por lo que no se atribuyen puntuaciones ni resultados de esos entornos.
+La arquitectura evita dependencias de ejecución y limita el registro persistente a identificadores de favoritos. El catálogo carga imágenes de forma diferida; la instalación precarga las fotografías en paralelo sin permitir que un error externo impida guardar el shell. Los recursos esenciales tienen una estrategia offline explícita. El CSS se adapta a móviles y teclado, la lista se actualiza sin recargar la página y el temporizador se detiene al cerrar la receta. Se confirmó en navegador el registro y control del Service Worker en localhost y Pages, la carga de las ocho imágenes almacenadas y la navegación sin red en localhost. Lighthouse y la instalación en un dispositivo físico no se ejecutaron, por lo que no se atribuyen puntuaciones ni resultados de esos entornos. La auditoría técnica se documenta en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
 
 ## 8. Resumen
 
