@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#482b3f">
+    <meta name="description" content="Recetas de postres para preparar en casa, incluso sin conexión.">
+    <title>Dulce Pausa — Recetas de postres</title>
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#" aria-label="Dulce Pausa, inicio">
+        <span class="brand-mark" aria-hidden="true">dp</span>
+        <span>Dulce <strong>Pausa</strong></span>
+      </a>
+      <div class="header-note"><span class="sparkle" aria-hidden="true">✳</span> Un poquito de dulzura cada día</div>
+      <div class="connection-status" id="connection-status" role="status">
+        <span class="status-dot" aria-hidden="true"></span><span id="connection-label">Preparando tu cocina</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">RECETAS HECHAS PARA DISFRUTAR</p>
+          <h1 id="hero-title">Hoy se antoja<br><em>algo dulce.</em></h1>
+          <p class="hero-description">Encuentra tu próximo postre favorito, ponte el delantal y disfruta el proceso. Tus recetas también están aquí cuando no hay internet.</p>
+          <a class="hero-link" href="#catalogo">Explorar recetas <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <div class="hero-stamp">HECHO<br>EN CASA</div>
+          <div class="hero-cake"><span class="cake-cream"></span><span class="cake-layer"></span><span class="cake-bottom"></span><span class="cake-berry berry-one"></span><span class="cake-berry berry-two"></span><span class="cake-berry berry-three"></span></div>
+          <span class="hero-sprinkle sprinkle-one">✳</span><span class="hero-sprinkle sprinkle-two">·</span><span class="hero-sprinkle sprinkle-three">✦</span>
+        </div>
+      </section>
+
+      <section class="catalog-section" id="catalogo" aria-labelledby="catalog-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">EL RECETARIO</p>
+            <h2 id="catalog-title">Postres para compartir</h2>
+          </div>
+          <button class="favorites-toggle" id="favorites-toggle" type="button" aria-pressed="false">
+            <span aria-hidden="true">♡</span> <span class="favorites-label">Ver favoritos</span>
+          </button>
+        </div>
+
+        <div class="catalog-tools">
+          <label class="search-field">
+            <span class="visually-hidden">Buscar por postre o ingrediente</span>
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search-input" type="search" placeholder="Busca un postre o ingrediente..." autocomplete="off">
+            <kbd>⌘ K</kbd>
+          </label>
+          <div class="category-filters" id="category-filters" aria-label="Filtrar por categoría"></div>
+        </div>
+
+        <p class="results-summary" id="results-summary" aria-live="polite"></p>
+        <div class="recipe-grid" id="recipe-grid"></div>
+        <div class="empty-state" id="empty-state" hidden>
+          <span aria-hidden="true">🍰</span>
+          <h3>Aún no encontramos ese antojo</h3>
+          <p>Prueba con otro nombre o ingrediente.</p>
+          <button class="text-button" id="clear-search" type="button">Limpiar búsqueda</button>
+        </div>
+      </section>
+
+      <section class="offline-note" aria-label="Disponibilidad sin conexión">
+        <span class="offline-icon" aria-hidden="true">⌁</span>
+        <div><strong>Tu recetario te acompaña</strong><p>Guarda tus favoritos y vuelve a ellos incluso sin conexión.</p></div>
+        <span class="offline-badge">LISTO PARA OFFLINE</span>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand footer-brand" href="#"><span class="brand-mark" aria-hidden="true">dp</span><span>Dulce <strong>Pausa</strong></span></a>
+      <p>Un recetario para saborear sin prisa.</p>
+      <span>Hecho con cariño <span class="heart" aria-hidden="true">♥</span></span>
+    </footer>
+
+    <dialog class="recipe-dialog" id="recipe-dialog" aria-labelledby="dialog-title">
+      <form method="dialog" class="dialog-topbar">
+        <span class="dialog-kicker">LA RECETA</span>
+        <button class="icon-button close-dialog" aria-label="Cerrar receta" value="close">×</button>
+      </form>
+      <div class="dialog-content" id="dialog-content"></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

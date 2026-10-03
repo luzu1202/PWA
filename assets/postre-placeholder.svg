@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <defs>
+    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#f7e7dd"/><stop offset="1" stop-color="#e9c9bd"/></linearGradient>
+    <linearGradient id="cream" x2="0" y2="1"><stop stop-color="#fffaf0"/><stop offset="1" stop-color="#efd5c1"/></linearGradient>
+  </defs>
+  <rect width="900" height="600" fill="url(#bg)"/>
+  <circle cx="450" cy="307" r="205" fill="#fffaf4" opacity=".56"/>
+  <ellipse cx="450" cy="423" rx="216" ry="45" fill="#fffaf4"/>
+  <path d="M292 345h316l-34 88H326z" fill="#d99a78"/>
+  <path d="M307 333h286l-14 42H321z" fill="#a64c53"/>
+  <path d="M307 330c0-76 59-139 143-139s143 63 143 139H307z" fill="url(#cream)"/>
+  <path d="M385 239c13-37 43-55 69-35 23-36 71-12 62 26-6 26-51 53-75 67-24-15-65-33-56-58z" fill="#b44f61"/>
+  <circle cx="375" cy="290" r="14" fill="#b44f61"/><circle cx="519" cy="288" r="14" fill="#b44f61"/>
+  <path d="M374 276l-7-12m148 12 8-12" fill="none" stroke="#678558" stroke-width="7" stroke-linecap="round"/>
+  <text x="450" y="520" fill="#704d58" font-family="Georgia,serif" font-size="29" text-anchor="middle">un momento dulce</text>
+</svg>

@@ -1,0 +1,28 @@
+{
+  "id": "./",
+  "name": "Dulce Pausa — Recetas de postres",
+  "short_name": "Dulce Pausa",
+  "description": "Un recetario de postres para preparar en casa, online y offline.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#482b3f",
+  "background_color": "#fffaf4",
+  "categories": ["food", "lifestyle"],
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
