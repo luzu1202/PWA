@@ -86,7 +86,7 @@ h1, h2, h3, p { margin-top: 0; }
 .recipe-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 .card-image-wrap { position: relative; height: 174px; overflow: hidden; background: #f3e6dd; }
 .card-image { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }.recipe-card:hover .card-image { transform: scale(1.04); }
-.card-image[src*="photo-1571877227200-a0d98ea607e9"], .detail-image[src*="photo-1571877227200-a0d98ea607e9"] { object-position: center center; }
+.card-image[src*="photo-1571877227200-a0d98ea607e9"], .detail-image[src*="photo-1571877227200-a0d98ea607e9"] { object-position: center 85%; }
 .card-category { position: absolute; bottom: 10px; left: 10px; padding: 6px 9px; border-radius: 12px; background: rgb(255 250 244 / 92%); color: #795964; font-size: 9px; font-weight: 600; }
 .favorite-button { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 31px; height: 31px; border: 0; border-radius: 50%; background: rgb(255 253 251 / 94%); color: #846e78; cursor: pointer; font-size: 18px; }
 .favorite-button[aria-pressed="true"] { color: #c75d70; }.favorite-button:hover { transform: scale(1.08); }

@@ -1,13 +1,13 @@
 "use strict";
 
-const CACHE_VERSION = "dulce-pausa-v7";
+const CACHE_VERSION = "dulce-pausa-v8";
 const APP_CACHE = `${CACHE_VERSION}-app`;
 const PHOTO_CACHE = `${CACHE_VERSION}-photos`;
 const FALLBACK_IMAGE = "./assets/postre-placeholder.svg";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=tiramisu-center",
+  "./styles.css?v=tiramisu-85",
   "./script.js",
   "./manifest.json",
   "./assets/icon.svg",
