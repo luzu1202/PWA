@@ -37,7 +37,7 @@ No se identificaron hallazgos de prioridad alta o crítica durante esta revisió
 - El tema usa variables CSS Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`); la tipografía combina Poppins, Playfair Display y Great Vibes con alternativas locales para modo offline.
 - El párrafo del hero conserva texto Buttermilk sobre fondo Midnight Blue. El contraste calculado de esos colores supera WCAG AA para texto normal.
 - La imagen del hero es una fotografía de pastel de chocolate; la del flan muestra flan con caramelo. Se verificaron ambas URL de Unsplash con respuesta de imagen.
-- El manifiesto, el color del navegador, el icono y la caché versionada se alinearon con la nueva paleta. La versión de caché es `dulce-pausa-v4`.
+- El manifiesto, el color del navegador, el icono y la caché versionada se alinearon con la nueva paleta. La caché Service Worker es `dulce-pausa-v5` y la URL CSS está versionada para invalidar copias HTTP anteriores.
 - En la última verificación local ambas nuevas imágenes respondieron `200 image/jpeg`, el hero y el detalle del flan las cargaron en navegador y el texto del hero alcanzó un contraste calculado de `10.06:1`.
 - En `localhost`, recargar sin conexión conservó el catálogo, los estilos y ocho fotografías previamente almacenadas.
 - En GitHub Pages se observó HTTP 200, ocho tarjetas, Service Worker activo y controlador, scope `https://luzu1202.github.io/PWA/`, siete entradas en caché de aplicación y ocho en caché de fotografías.
@@ -56,4 +56,4 @@ No se identificaron hallazgos de prioridad alta o crítica durante esta revisió
 
 ## Conclusión
 
-La versión anterior de la aplicación está desplegada en GitHub Pages. Los arreglos del contraste y las fotografías fueron verificados en la copia local con respuestas de imagen correctas; no se han desplegado. El funcionamiento offline de la estructura y de los recursos ya almacenados está verificado en localhost; las recomendaciones de baja prioridad describen mejoras de compatibilidad y autonomía, no impedimentos para probar la versión actual.
+La nueva versión está desplegada en GitHub Pages. El HTML y las fotografías publicados respondieron correctamente; el versionado del CSS evita reutilizar una copia anterior del estilo. El funcionamiento offline de la estructura y de los recursos almacenados está verificado en localhost; las recomendaciones de baja prioridad describen mejoras de compatibilidad y autonomía, no impedimentos para probar la versión actual.

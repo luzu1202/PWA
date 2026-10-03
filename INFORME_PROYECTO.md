@@ -134,7 +134,7 @@ El Service Worker no puede operar al abrir `index.html` directamente mediante `f
 
 La arquitectura evita dependencias de ejecución y limita el registro persistente a identificadores de favoritos. El catálogo carga imágenes de forma diferida; la instalación precarga las fotografías en paralelo sin permitir que un error externo impida guardar el shell. Los recursos esenciales tienen una estrategia offline explícita. El CSS se adapta a móviles y teclado, la lista se actualiza sin recargar la página y el temporizador se detiene al cerrar la receta. Se confirmó en navegador el registro y control del Service Worker en localhost y Pages, la carga de las ocho imágenes almacenadas y la navegación sin red en localhost. Lighthouse y la instalación en un dispositivo físico no se ejecutaron, por lo que no se atribuyen puntuaciones ni resultados de esos entornos. La auditoría técnica se documenta en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
 
-En la última revisión local se verificó el texto Buttermilk sobre el hero Midnight Blue con contraste 10.06:1, ambas fotografías nuevas de Unsplash con respuesta JPEG y visualización correcta, y la precarga de sus identificadores bajo la versión `dulce-pausa-v4`. Estos cambios permanecen locales; no se ha ejecutado un nuevo despliegue.
+En la última revisión se detectó que un navegador que ya había visitado Pages aún podía reutilizar una hoja CSS HTTP anterior. La referencia a CSS lleva ahora una consulta de versión y la caché del Service Worker sube a `dulce-pausa-v5`, para solicitar los estilos actualizados tras desplegar. La copia local verificó el contraste Buttermilk sobre Midnight Blue de 10.06:1, ambas fotografías nuevas de Unsplash con respuesta JPEG y visualización correcta.
 
 ## 8. Resumen
 
