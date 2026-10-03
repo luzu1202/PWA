@@ -27,6 +27,13 @@ No se identificaron hallazgos de prioridad alta o crítica durante esta revisió
 - JavaScript sintácticamente válido en Actions: `node --check script.js` y `node --check sw.js`.
 - Manifiesto JSON válido, con `display: standalone`, ruta de inicio y recursos necesarios presentes.
 - Catálogo de ocho postres; búsqueda por `mascarpone`, filtro `Pasteles`, favoritos persistentes en `localStorage`, diálogo con ingredientes y pasos, y temporizador decrementando correctamente.
+- Duraciones de tarjetas y detalle legibles y coherentes: tiramisú `4 h 35 min`, pay de limón `3 h 45 min`, cheesecake `5 h 45 min` y flan `3 h 15 min`; las esperas se indican en las descripciones y quedan fuera del temporizador activo.
+- Temporizador de brownies inicia en 25 minutos, se ajusta a 26, decrementa a `25:59`, bloquea la edición mientras corre y reinicia con la duración elegida.
+- En recetas sin cocción cronometrada, el temporizador queda sin valor inicial, pero puede configurarse como recordatorio manual; se comprobó con un minuto y reinicio.
+- El tiempo se actualiza contra una hora de finalización, evitando perder precisión cuando el navegador limita los intervalos en segundo plano.
+- La duración estimada aparece en las tarjetas y en el detalle, con horas y minutos legibles y las esperas descritas fuera del temporizador de cocción.
+- El tema usa variables CSS Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`); la tipografía combina Poppins, Playfair Display y Great Vibes con alternativas locales para modo offline.
+- El manifiesto, el color del navegador, el icono y la caché versionada se alinearon con la nueva paleta. La versión de caché es `dulce-pausa-v3`.
 - En `localhost`, recargar sin conexión conservó el catálogo, los estilos y ocho fotografías previamente almacenadas.
 - En GitHub Pages se observó HTTP 200, ocho tarjetas, Service Worker activo y controlador, scope `https://luzu1202.github.io/PWA/`, siete entradas en caché de aplicación y ocho en caché de fotografías.
 - GitHub Actions [run 37095116436](https://github.com/luzu1202/PWA/actions/runs/37095116436): validación y despliegue completados con éxito.
@@ -34,9 +41,11 @@ No se identificaron hallazgos de prioridad alta o crítica durante esta revisió
 ## Rendimiento, accesibilidad y mantenimiento
 
 - Las imágenes de tarjetas usan carga diferida; el layout de las tarjetas reserva altura para reducir desplazamientos al cargar.
-- CSS, JavaScript, icono y SVG de respaldo se sirven desde el proyecto, sin bibliotecas de runtime ni fuente tipográfica externa.
+- CSS, JavaScript, icono y SVG de respaldo se sirven desde el proyecto, sin bibliotecas de runtime; las fuentes externas son una mejora progresiva y cuentan con alternativas de sistema.
+- Las familias Poppins, Playfair Display y Great Vibes se solicitan a Google Fonts; si no están disponibles, se utilizan las familias de reserva del sistema.
 - La interfaz ofrece etiquetas accesibles, foco visible, estados de botones y adaptación a movimiento reducido.
 - Los recursos esenciales se cachean antes de activar la nueva versión; la precarga remota de imágenes tolera fallos y no bloquea el shell.
+- La caché del Service Worker sube a `dulce-pausa-v2` junto con la refactorización, para actualizar los recursos guardados por instalaciones anteriores.
 - El modo cocina usa Screen Wake Lock cuando está disponible y comunica la limitación cuando el navegador no lo permite.
 - Lighthouse y la instalación física no se ejecutaron; no se reportan puntuaciones ni compatibilidad fuera del navegador probado.
 

@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "dulce-pausa-v1";
+const CACHE_VERSION = "dulce-pausa-v3";
 const APP_CACHE = `${CACHE_VERSION}-app`;
 const PHOTO_CACHE = `${CACHE_VERSION}-photos`;
 const FALLBACK_IMAGE = "./assets/postre-placeholder.svg";

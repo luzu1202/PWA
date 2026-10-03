@@ -53,11 +53,11 @@ La solución se construyó como una aplicación cliente estática, con responsab
 
 ### 5.1 Arquitectura
 
-La solución es una aplicación estática, sin servidor de datos ni dependencias de frameworks. `index.html`, `styles.css` y `script.js` dividen estructura, presentación y comportamiento; el manifiesto y el Service Worker agregan capacidades PWA.
+La solución es una aplicación estática, sin servidor de datos ni dependencias de frameworks. `index.html`, `styles.css` y `script.js` dividen estructura, presentación y comportamiento; el manifiesto y el Service Worker agregan capacidades PWA. El sistema visual centraliza los colores en variables: Buttermilk (`#FFF2BA`) para el fondo y Midnight Blue (`#0F3C65`) para texto y acciones.
 
 ### 5.2 Flujo de datos
 
-El catálogo de recetas se define en `script.js`. La búsqueda, la categoría seleccionada y el filtro de favoritos producen una lista visible que se representa en tarjetas. Los favoritos se leen y guardan en `localStorage`; la vista de detalle obtiene los ingredientes y pasos del mismo catálogo.
+El catálogo de recetas se define en `script.js`. `time` representa la duración total estimada y suma preparación, cocción y los reposos indicados; `timerMinutes` es independiente y solo propone la duración inicial de una fase activa de cocción u horneado. Los reposos largos se presentan en las notas y pasos, no se incluyen en el temporizador de cocina. En recetas sin cocción cronometrada, el usuario puede configurar un temporizador opcional. La búsqueda, la categoría seleccionada y el filtro de favoritos producen una lista visible que se representa en tarjetas. Los favoritos se leen y guardan en `localStorage`; la vista de detalle obtiene los ingredientes y pasos del mismo catálogo.
 
 ### 5.3 Estrategia offline-first
 
@@ -69,15 +69,15 @@ El desarrollo concreta esa arquitectura en los documentos de la aplicación, el 
 
 ### 6.1 `index.html`
 
-Define la página en español con encabezado, presentación, filtros, campo de búsqueda, catálogo, aviso offline, pie de página y diálogo accesible para el detalle de cada receta. También declara el manifiesto, los metadatos de visualización y los recursos principales.
+Define la página en español con encabezado, presentación, filtros, campo de búsqueda, catálogo, aviso offline, pie de página y diálogo accesible para el detalle de cada receta. También declara el manifiesto, los metadatos de visualización, el color Midnight Blue del navegador y las fuentes Poppins, Playfair Display y Great Vibes.
 
 ### 6.2 `styles.css`
 
-Implementa una identidad visual cálida inspirada en pastelería, tarjetas responsivas, diálogo de receta, estados vacíos, avisos y adaptación a pantallas pequeñas. Incluye estilos de foco visibles y respeta la preferencia de movimiento reducido del sistema.
+Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido.
 
 ### 6.3 `script.js`
 
-Implementa ocho recetas exclusivamente dulces, filtros y búsqueda inmediata, favoritos persistentes, instrucciones detalladas, temporizador con controles, modo cocina y registro del Service Worker. El modo cocina solicita Screen Wake Lock cuando el navegador lo admite; en otros casos explica la limitación y conserva el modo visual.
+Implementa ocho recetas exclusivamente dulces, filtros y búsqueda inmediata, favoritos persistentes, instrucciones detalladas, temporizador ajustable por minuto, modo cocina y registro del Service Worker. Cada tarjeta y detalle presentan el tiempo total estimado; las esperas de refrigeración y reposo quedan descritas aparte del temporizador de la fase activa. El tiempo se puede ajustar antes de iniciar o al pausarlo y se calcula desde una hora objetivo para evitar deriva en segundo plano. Las recetas sin cocción cronometrada admiten un temporizador opcional. Las duraciones se muestran en español como minutos u horas y minutos. El modo cocina solicita Screen Wake Lock cuando el navegador lo admite; en otros casos explica la limitación y conserva el modo visual.
 
 ### 6.4 `manifest.json`
 
@@ -97,9 +97,11 @@ Los resultados se describen a partir de las funciones implementadas y de las ver
 
 ### 7.1 Funcionalidades implementadas
 
-- Catálogo visual de ocho postres con tiempo, categoría y dificultad.
+- Catálogo visual de ocho postres con duración total estimada, categoría y dificultad.
+- Paleta Buttermilk/Midnight Blue validada en navegador: fondo `rgb(255, 242, 186)`, portada `rgb(15, 60, 101)` y títulos `rgb(15, 60, 101)`.
+- Fuentes calculadas como Poppins para lectura, Playfair Display para titulares y Great Vibes para el acento caligráfico.
 - Búsqueda por nombre, ingredientes y descripción, filtros por categoría y vista de favoritos.
-- Detalle con ingredientes, pasos ordenados, temporizador configurable por receta y modo cocina.
+- Detalle con ingredientes, pasos ordenados, tiempo total separado de las fases activas, temporizador ajustable por minuto y modo cocina.
 - Persistencia local de favoritos, indicador online/offline e instalación PWA.
 - Caché versionada de recursos esenciales y precarga opcional de fotografías.
 
@@ -111,10 +113,14 @@ Los resultados se describen a partir de las funciones implementadas y de las ver
 | Catálogo limitado a recetas de postres | Verificado en los datos de la aplicación |
 | Búsqueda, filtros y persistencia de favoritos | Verificados en navegador: «mascarpone» devuelve 1 receta y «Pasteles» muestra 2; favorito persiste en `localStorage` |
 | Diálogo y pasos de receta | Verificados: detalle de brownies abre, presenta 8 ingredientes y 4 pasos, y cierra correctamente |
-| Temporizador | Verificado: inicia y decrementa de 25:00 a 24:59; reinicio funcional |
+| Tiempo total y esperas | Verificados en tarjetas y detalle: tiramisú 4 h 35 min, pay de limón 3 h 45 min, cheesecake 5 h 45 min y flan 3 h 15 min; notas aclaran refrigeración/reposo |
+| Temporizador de fase activa | Verificado: brownies inicia en 25 min, se ajusta a 26, decrementa a 25:59, bloquea edición durante la marcha y reinicia según el ajuste |
+| Temporizador en recetas sin cocción cronometrada | Verificado: tiramisú y pay no cargan la espera larga en el temporizador; se puede configurar un temporizador opcional manualmente |
+| Temporizador en segundo plano | El tiempo restante se calcula desde una hora objetivo, no contando ticks; se evita acumular deriva si el navegador limita intervalos |
 | Modo cocina | Implementado; la retención de pantalla utiliza Screen Wake Lock cuando el navegador la admite |
 | Manifiesto con modo `standalone` e icono | Implementado |
 | Registro y control del Service Worker | Verificados en `localhost`; Service Worker activo y controlando la página |
+| Actualización del shell tras el cambio del temporizador | Versión de caché del Service Worker incrementada a `dulce-pausa-v2` |
 | Publicación en GitHub Pages | Verificada: respuesta HTTP 200 en [Dulce Pausa](https://luzu1202.github.io/PWA/) |
 | Workflow de GitHub Actions | Ejecución [37095116436](https://github.com/luzu1202/PWA/actions/runs/37095116436) completada correctamente; validación y despliegue exitosos |
 | Instalación del Service Worker en GitHub Pages | Verificada: scope `https://luzu1202.github.io/PWA/`, control activo y cachés con 7 recursos esenciales y 8 fotografías |

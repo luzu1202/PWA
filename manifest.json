@@ -8,8 +8,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#482b3f",
-  "background_color": "#fffaf4",
+  "theme_color": "#0F3C65",
+  "background_color": "#FFF2BA",
   "categories": ["food", "lifestyle"],
   "icons": [
     {

@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#482b3f"/>
-  <circle cx="256" cy="256" r="166" fill="#fbf1eb"/>
-  <path d="M137 320h238l-20 69H157z" fill="#d89379"/>
-  <path d="M146 302c0-35 24-62 57-67 12-42 48-68 92-68 48 0 85 30 92 78 23 9 38 30 38 57H146z" fill="#fffaf4"/>
-  <path d="M160 309h192l-11 39H171z" fill="#b65a61"/>
-  <circle cx="224" cy="192" r="12" fill="#b64f61"/>
-  <circle cx="266" cy="174" r="12" fill="#b64f61"/>
-  <circle cx="308" cy="194" r="12" fill="#b64f61"/>
-  <path d="M224 179l-8-14m50-4-1-17m43 40 11-13" fill="none" stroke="#688456" stroke-linecap="round" stroke-width="7"/>
-  <text x="256" y="445" fill="#fffaf4" font-family="Georgia,serif" font-size="34" font-style="italic" text-anchor="middle">dulce pausa</text>
+  <rect width="512" height="512" rx="112" fill="#0F3C65"/>
+  <circle cx="256" cy="256" r="166" fill="#FFF2BA"/>
+  <path d="M137 320h238l-20 69H157z" fill="#D9B34A"/>
+  <path d="M146 302c0-35 24-62 57-67 12-42 48-68 92-68 48 0 85 30 92 78 23 9 38 30 38 57H146z" fill="#FFF9DF"/>
+  <path d="M160 309h192l-11 39H171z" fill="#174D78"/>
+  <circle cx="224" cy="192" r="12" fill="#A8671D"/>
+  <circle cx="266" cy="174" r="12" fill="#A8671D"/>
+  <circle cx="308" cy="194" r="12" fill="#A8671D"/>
+  <path d="M224 179l-8-14m50-4-1-17m43 40 11-13" fill="none" stroke="#0F3C65" stroke-linecap="round" stroke-width="7"/>
+  <text x="256" y="445" fill="#FFF2BA" font-family="Georgia,serif" font-size="34" font-style="italic" text-anchor="middle">dulce pausa</text>
 </svg>
