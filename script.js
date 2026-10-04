@@ -3,6 +3,17 @@
 const image = (photo, width = 900) =>
   `https://images.unsplash.com/${photo}?auto=format&fit=crop&w=${width}&q=82`;
 
+const DESSERTS_API_URL = "https://www.themealdb.com/api/json/v1/1/filter.php?c=Dessert";
+const RECIPE_API_URL = "https://www.themealdb.com/api/json/v1/1/lookup.php?i=";
+const TRANSLATION_URL = "https://api.mymemory.translated.net/get";
+const dessertCacheKey = "dulce-pausa-themealdb-desserts";
+const mealDetailsCacheKey = "dulce-pausa-themealdb-details";
+const translationUsageKey = "dulce-pausa-translation-usage";
+const API_PAGE_SIZE = 12;
+const MAX_CACHED_MEAL_DETAILS = 20;
+const TRANSLATION_DAILY_LIMIT = 4500;
+const TRANSLATION_SEGMENT_LIMIT = 450;
+
 const recipes = [
   {
     id: "tiramisu", name: "Tiramisú clásico", category: "Sin horno", time: 275, difficulty: "Fácil",
@@ -65,11 +76,15 @@ const recipes = [
 const placeholderImage = "assets/postre-placeholder.svg";
 const favoritesKey = "dulce-pausa-favorites";
 const MAX_TIMER_MINUTES = 24 * 60;
-const state = { category: "Todos", favoritesOnly: false, favorites: new Set(), activeRecipe: null, timerDurationSeconds: null, timerRemaining: null, timerEndTimestamp: null, timerInterval: null, wakeLock: null, toastTimeout: null };
+let apiRecipes = loadCachedDesserts();
+const state = { category: "Todos", favoritesOnly: false, favorites: new Set(), activeRecipe: null, timerDurationSeconds: null, timerRemaining: null, timerEndTimestamp: null, timerInterval: null, wakeLock: null, toastTimeout: null, visibleApiCount: API_PAGE_SIZE, translationPending: false };
 const grid = document.querySelector("#recipe-grid");
 const searchInput = document.querySelector("#search-input");
 const dialog = document.querySelector("#recipe-dialog");
 const dialogContent = document.querySelector("#dialog-content");
+const catalogStatus = document.querySelector("#catalog-status");
+const refreshDessertsButton = document.querySelector("#refresh-desserts");
+const loadMoreDessertsButton = document.querySelector("#load-more-desserts");
 const toast = document.querySelector("#toast");
 
 function announce(message) {
@@ -79,12 +94,342 @@ function announce(message) {
   state.toastTimeout = setTimeout(() => toast.classList.remove("visible"), 3400);
 }
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+  })[character]);
+}
+
+function safeMealImage(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol === "https:" && url.hostname === "www.themealdb.com") return url.href;
+  } catch (error) {
+    console.warn("TheMealDB devolvió una URL de imagen inválida.", error);
+  }
+  return placeholderImage;
+}
+
+function safeRecipeSource(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : "";
+  } catch (error) {
+    if (value) console.warn("La receta incluye un enlace de origen inválido.", error);
+    return "";
+  }
+}
+
+function parseDurations(text) {
+  const durations = [];
+  const pattern = /\b(\d{1,3})(?:\s*(?:-|–|to)\s*(\d{1,3}))?\s*(minutes?|mins?|hours?|hrs?)\b/gi;
+  for (const match of text.matchAll(pattern)) {
+    const low = Number(match[1]);
+    const high = Number(match[2] || match[1]);
+    const multiplier = match[3].toLowerCase().startsWith("h") ? 60 : 1;
+    durations.push(Math.round(((low + high) / 2) * multiplier));
+  }
+  return durations;
+}
+
+function estimateRecipeTime(recipe) {
+  if (Number.isFinite(recipe.time) && recipe.time > 0) return recipe.time;
+  const preparation = Math.max(15, Math.min(50, Math.round(8 + recipe.ingredients.length + recipe.steps.length * 1.4)));
+  let cooking = 0;
+  let resting = 0;
+  let requiresCooking = false;
+
+  for (const step of recipe.steps) {
+    const text = step.toLocaleLowerCase("en");
+    const minutes = parseDurations(step).reduce((total, duration) => total + duration, 0);
+    if (/refrigerat|chill|cool|rest|stand|set aside|let .* sit/.test(text)) {
+      resting += minutes;
+    } else if (/bake|oven|fry|cook|boil|simmer|roast|microwave|grill|heat|pan\b/.test(text)) {
+      requiresCooking = true;
+      cooking += minutes;
+    }
+  }
+
+  if (requiresCooking && cooking === 0) {
+    const instructions = recipe.steps.join(" ").toLocaleLowerCase("en");
+    cooking = /bake|oven|roast/.test(instructions) ? 35 : /fry|pan\b/.test(instructions) ? 20 : 15;
+  }
+  return Math.max(15, Math.min(600, Math.ceil((preparation + cooking + resting) / 5) * 5));
+}
+
+function splitTranslationSegments(text) {
+  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  return sentences.flatMap((sentence) => {
+    const trimmed = sentence.trim();
+    if (new TextEncoder().encode(trimmed).length <= TRANSLATION_SEGMENT_LIMIT) return [trimmed];
+    const chunks = [];
+    let chunk = "";
+    for (const word of trimmed.split(/\s+/)) {
+      const candidate = chunk ? `${chunk} ${word}` : word;
+      if (new TextEncoder().encode(candidate).length > TRANSLATION_SEGMENT_LIMIT && chunk) {
+        chunks.push(chunk);
+        chunk = word;
+      } else {
+        chunk = candidate;
+      }
+    }
+    if (chunk) chunks.push(chunk);
+    return chunks;
+  }).filter(Boolean);
+}
+
+function translationCharactersUsed() {
+  try {
+    const usage = JSON.parse(localStorage.getItem(translationUsageKey) || "{}");
+    return usage.date === new Date().toISOString().slice(0, 10) ? Number(usage.characters) || 0 : 0;
+  } catch (error) {
+    console.error("No se pudo leer el uso diario de traducción.", error);
+    throw new Error("No se pudo comprobar el límite diario de traducción en este navegador.");
+  }
+}
+
+function reserveTranslationCharacters(characters) {
+  const used = translationCharactersUsed();
+  if (used + characters > TRANSLATION_DAILY_LIMIT) {
+    throw new Error("Se alcanzó el límite diario de traducción gratuita. Inténtalo mañana o consulta la receta original.");
+  }
+  try {
+    localStorage.setItem(translationUsageKey, JSON.stringify({
+      date: new Date().toISOString().slice(0, 10),
+      characters: used + characters
+    }));
+  } catch (error) {
+    console.error("No se pudo guardar el límite de traducción.", error);
+    throw new Error("El navegador no pudo guardar el control de uso de traducción.");
+  }
+}
+
+async function translateSentence(sentence) {
+  const url = new URL(TRANSLATION_URL);
+  url.searchParams.set("q", sentence);
+  url.searchParams.set("langpair", "en|es-MX");
+  const data = await fetchJson(url.href);
+  if (data.responseStatus !== 200 || !data.responseData?.translatedText) {
+    throw new Error(data.responseDetails || "El servicio no devolvió una traducción.");
+  }
+  const decoder = document.createElement("textarea");
+  decoder.innerHTML = data.responseData.translatedText;
+  return decoder.value;
+}
+
+async function translateParagraph(text) {
+  const segments = splitTranslationSegments(text);
+  const translations = [];
+  for (const segment of segments) translations.push(await translateSentence(segment));
+  return translations.join(" ");
+}
+
+async function translateMealRecipe(recipe) {
+  if (!navigator.onLine) throw new Error("Conéctate a internet para traducir esta receta.");
+  const sourceTexts = [recipe.name, recipe.description, ...recipe.ingredients, ...recipe.steps];
+  const characterCount = sourceTexts.flatMap(splitTranslationSegments)
+    .reduce((total, segment) => total + segment.length, 0);
+  reserveTranslationCharacters(characterCount);
+  const translateList = (items) => Promise.all(items.map(translateParagraph));
+  const [name, description, ingredients, steps] = await Promise.all([
+    translateParagraph(recipe.name),
+    translateParagraph(recipe.description),
+    translateList(recipe.ingredients),
+    translateList(recipe.steps)
+  ]);
+  return { name, description, ingredients, steps };
+}
+
+function normalizeMealSummary(meal) {
+  if (!meal) return null;
+  const mealId = String(meal.mealId || meal.idMeal || "");
+  const name = meal.name || meal.strMeal;
+  if (!/^\d+$/.test(mealId) || typeof name !== "string" || !name.trim()) return null;
+  return {
+    id: `meal-${mealId}`,
+    mealId,
+    name: name.trim(),
+    category: "Recetas internacionales",
+    time: null,
+    difficulty: "No especificada",
+    description: "Una receta dulce de distintas partes del mundo. Abre para consultar ingredientes e instrucciones.",
+    image: safeMealImage(meal.image || meal.strMealThumb),
+    ingredients: []
+  };
+}
+
+function loadCachedDesserts() {
+  try {
+    const stored = localStorage.getItem(dessertCacheKey);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) throw new TypeError("La caché local de postres no tiene el formato esperado.");
+    return parsed.map(normalizeMealSummary).filter(Boolean);
+  } catch (error) {
+    console.error("No se pudieron recuperar los postres guardados para uso offline.", error);
+    return [];
+  }
+}
+
+function saveCachedDesserts(desserts) {
+  try {
+    localStorage.setItem(dessertCacheKey, JSON.stringify(desserts));
+  } catch (error) {
+    console.error("No se pudieron guardar los postres online para uso offline.", error);
+    catalogStatus.textContent = "Recetas cargadas. El navegador no permitió guardar una copia offline.";
+  }
+}
+
+function setCatalogStatus(message, isError = false) {
+  catalogStatus.textContent = message;
+  catalogStatus.toggleAttribute("data-error", isError);
+}
+
+async function fetchJson(url) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`El servicio respondió HTTP ${response.status}.`);
+    return await response.json();
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function loadDesserts() {
+  if (!navigator.onLine) {
+    setCatalogStatus(apiRecipes.length
+      ? `Sin conexión. Se muestran ${apiRecipes.length} recetas adicionales guardadas en este dispositivo.`
+      : "Sin conexión. Tu recetario guardado sigue disponible.");
+    return;
+  }
+
+  refreshDessertsButton.disabled = true;
+  setCatalogStatus("Buscando más recetas...");
+  try {
+    const data = await fetchJson(DESSERTS_API_URL);
+    if (!Array.isArray(data.meals)) throw new TypeError("La respuesta de TheMealDB no contiene la lista esperada de postres.");
+    apiRecipes = data.meals.map(normalizeMealSummary).filter(Boolean);
+    state.visibleApiCount = API_PAGE_SIZE;
+    saveCachedDesserts(apiRecipes);
+    renderCategories();
+    renderRecipes();
+    setCatalogStatus(apiRecipes.length
+      ? `Encontramos ${apiRecipes.length} recetas internacionales. Algunas están en inglés: puedes traducirlas al español al abrirlas.`
+      : "No encontramos recetas adicionales para mostrar.");
+  } catch (error) {
+    console.error("No se pudieron cargar las recetas internacionales.", error);
+    setCatalogStatus(apiRecipes.length
+      ? `No se pudieron actualizar las recetas. Se conservan ${apiRecipes.length} recetas guardadas y el recetario local.`
+      : "No se pudieron cargar más recetas. Tu recetario local sigue disponible; intenta actualizar cuando tengas conexión.",
+    true);
+  } finally {
+    refreshDessertsButton.disabled = false;
+  }
+}
+
+function loadCachedMealDetails() {
+  try {
+    const stored = localStorage.getItem(mealDetailsCacheKey);
+    if (!stored) return {};
+    const parsed = JSON.parse(stored);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new TypeError("La caché de detalles de recetas tiene un formato inválido.");
+    return parsed;
+  } catch (error) {
+    console.error("No se pudieron leer los detalles de recetas guardados.", error);
+    return {};
+  }
+}
+
+function normalizeMealDetails(meal) {
+  if (meal && /^\d+$/.test(String(meal.mealId || "")) && Array.isArray(meal.ingredients) && Array.isArray(meal.steps)) {
+    return {
+      ...meal,
+      id: `meal-${meal.mealId}`,
+      name: String(meal.name || ""),
+      category: "Recetas internacionales",
+      time: Number(meal.time) || estimateRecipeTime(meal),
+      timeEstimated: true,
+      difficulty: "No especificada",
+      image: safeMealImage(meal.image),
+      sourceUrl: safeRecipeSource(meal.sourceUrl),
+      translation: meal.translation && Array.isArray(meal.translation.ingredients) && Array.isArray(meal.translation.steps)
+        ? meal.translation
+        : null,
+      translated: Boolean(meal.translated)
+    };
+  }
+  if (!meal || !/^\d+$/.test(String(meal.idMeal || "")) || typeof meal.strMeal !== "string") {
+    throw new TypeError("TheMealDB devolvió un detalle de receta incompleto.");
+  }
+  const ingredients = [];
+  for (let index = 1; index <= 20; index += 1) {
+    const ingredient = meal[`strIngredient${index}`]?.trim();
+    if (!ingredient) continue;
+    const measure = meal[`strMeasure${index}`]?.trim();
+    ingredients.push([measure, ingredient].filter(Boolean).join(" "));
+  }
+  const instructions = String(meal.strInstructions || "").trim();
+  const steps = instructions
+    .replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/g, "$1\n")
+    .split(/\r?\n+/)
+    .map((step) => step.replace(/^[\s▢•]+/, "").trim())
+    .filter(Boolean);
+  if (!ingredients.length || !steps.length) throw new TypeError("TheMealDB no proporcionó ingredientes o instrucciones para esta receta.");
+  const recipe = {
+    id: `meal-${meal.idMeal}`,
+    mealId: String(meal.idMeal),
+    name: meal.strMeal.trim(),
+    category: "Recetas internacionales",
+    time: 0,
+    difficulty: "No especificada",
+    description: [meal.strArea, meal.strCategory].filter(Boolean).join(" · ") || "Receta dulce internacional.",
+    image: safeMealImage(meal.strMealThumb),
+    ingredients,
+    steps,
+    timerMinutes: null,
+    timerLabel: null,
+    sourceUrl: safeRecipeSource(meal.strSource),
+    translation: null,
+    translated: false,
+    timeEstimated: true
+  };
+  recipe.time = estimateRecipeTime(recipe);
+  return recipe;
+}
+
+function saveMealDetails(recipe) {
+  try {
+    const cachedDetails = loadCachedMealDetails();
+    delete cachedDetails[recipe.mealId];
+    cachedDetails[recipe.mealId] = recipe;
+    const recentDetails = Object.entries(cachedDetails).slice(-MAX_CACHED_MEAL_DETAILS);
+    localStorage.setItem(mealDetailsCacheKey, JSON.stringify(Object.fromEntries(recentDetails)));
+  } catch (error) {
+    console.error("No se pudo guardar el detalle de la receta para uso offline.", error);
+    announce("La receta está disponible ahora, pero no se pudo guardar para consultarla offline.");
+  }
+}
+
+async function fetchMealDetails(recipe) {
+  const cached = loadCachedMealDetails()[recipe.mealId];
+  if (cached) return normalizeMealDetails(cached);
+  const data = await fetchJson(`${RECIPE_API_URL}${encodeURIComponent(recipe.mealId)}`);
+  if (!Array.isArray(data.meals) || !data.meals.length) throw new Error("TheMealDB no encontró el detalle de este postre.");
+  const details = normalizeMealDetails(data.meals[0]);
+  saveMealDetails(details);
+  return details;
+}
+
 function loadFavorites() {
   try {
     const stored = localStorage.getItem(favoritesKey);
     if (stored) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) state.favorites = new Set(parsed.filter((id) => recipes.some((recipe) => recipe.id === id)));
+      if (Array.isArray(parsed)) state.favorites = new Set(parsed.filter((id) =>
+        recipes.some((recipe) => recipe.id === id) || /^meal-\d+$/.test(String(id))
+      ));
     }
   } catch (error) {
     console.error("No se pudieron cargar los favoritos locales.", error);
@@ -104,7 +449,7 @@ function saveFavorites() {
 }
 
 function renderCategories() {
-  const categories = ["Todos", ...new Set(recipes.map((recipe) => recipe.category))];
+  const categories = ["Todos", ...new Set([...recipes, ...apiRecipes].map((recipe) => recipe.category))];
   document.querySelector("#category-filters").innerHTML = categories.map((category) =>
     `<button class="filter-chip" type="button" data-category="${category}" aria-pressed="${state.category === category}">${category}</button>`
   ).join("");
@@ -112,7 +457,7 @@ function renderCategories() {
 
 function filteredRecipes() {
   const query = searchInput.value.trim().toLocaleLowerCase("es");
-  return recipes.filter((recipe) => {
+  return [...recipes, ...apiRecipes].filter((recipe) => {
     const matchesCategory = state.category === "Todos" || recipe.category === state.category;
     const matchesSearch = !query || `${recipe.name} ${recipe.description} ${recipe.category} ${recipe.ingredients.join(" ")}`.toLocaleLowerCase("es").includes(query);
     const matchesFavorite = !state.favoritesOnly || state.favorites.has(recipe.id);
@@ -121,49 +466,84 @@ function filteredRecipes() {
 }
 
 function renderRecipes() {
-  const visibleRecipes = filteredRecipes();
+  const matches = filteredRecipes();
+  const localRecipes = matches.filter((recipe) => !recipe.mealId);
+  const matchingApiRecipes = matches.filter((recipe) => recipe.mealId);
+  const visibleRecipes = [...localRecipes, ...matchingApiRecipes.slice(0, state.visibleApiCount)];
   grid.innerHTML = visibleRecipes.map((recipe) => `
     <article class="recipe-card">
       <div class="card-image-wrap">
-        <img class="card-image" src="${recipe.image}" alt="${recipe.name}" loading="lazy" data-fallback="${placeholderImage}">
-        <span class="card-category">${recipe.category}</span>
-        <button class="favorite-button" type="button" data-favorite="${recipe.id}" aria-label="${state.favorites.has(recipe.id) ? "Quitar de" : "Añadir a"} favoritos: ${recipe.name}" aria-pressed="${state.favorites.has(recipe.id)}">${state.favorites.has(recipe.id) ? "♥" : "♡"}</button>
+        <img class="card-image" src="${escapeHTML(recipe.image)}" alt="${escapeHTML(recipe.name)}" loading="lazy" data-fallback="${placeholderImage}">
+        <span class="card-category">${escapeHTML(recipe.category)}</span>
+        <button class="favorite-button" type="button" data-favorite="${escapeHTML(recipe.id)}" aria-label="${state.favorites.has(recipe.id) ? "Quitar de" : "Añadir a"} favoritos: ${escapeHTML(recipe.name)}" aria-pressed="${state.favorites.has(recipe.id)}">${state.favorites.has(recipe.id) ? "♥" : "♡"}</button>
       </div>
       <div class="card-body">
-        <h3 class="card-title">${recipe.name}</h3>
-        <p class="card-description">${recipe.description}</p>
-        <div class="card-meta"><span class="card-total-time" aria-label="Tiempo total estimado: ${formatDuration(recipe.time)}">${formatDuration(recipe.time)}</span><span class="difficulty">${recipe.difficulty}</span></div>
-        <button class="card-open" type="button" data-open="${recipe.id}">Ver receta <span aria-hidden="true">→</span></button>
+        <h3 class="card-title">${escapeHTML(recipe.name)}</h3>
+        <p class="card-description">${escapeHTML(recipe.description)}</p>
+        <div class="card-meta"><span class="card-total-time">${recipe.time ? `${recipe.mealId ? "Aprox. " : ""}${escapeHTML(formatDuration(recipe.time))}` : "Tiempo por confirmar"}</span><span class="difficulty">${escapeHTML(recipe.difficulty)}</span></div>
+        <button class="card-open" type="button" data-open="${escapeHTML(recipe.id)}">Ver receta <span aria-hidden="true">→</span></button>
       </div>
     </article>`).join("");
-  document.querySelector("#results-summary").textContent = `${visibleRecipes.length} ${visibleRecipes.length === 1 ? "receta" : "recetas"}${state.favoritesOnly ? " en tus favoritos" : ""}`;
+  const apiShown = Math.min(matchingApiRecipes.length, state.visibleApiCount);
+  document.querySelector("#results-summary").textContent = `${visibleRecipes.length} ${visibleRecipes.length === 1 ? "receta" : "recetas"}${state.favoritesOnly ? " en tus favoritos" : ""}${matchingApiRecipes.length > apiShown ? ` · ${apiShown} de ${matchingApiRecipes.length} recetas adicionales` : ""}`;
   document.querySelector("#empty-state").hidden = visibleRecipes.length > 0;
+  loadMoreDessertsButton.hidden = matchingApiRecipes.length <= apiShown;
   document.querySelector("#favorites-toggle").setAttribute("aria-pressed", String(state.favoritesOnly));
   document.querySelector(".favorites-label").textContent = state.favoritesOnly ? "Ver todas" : "Ver favoritos";
 }
 
-function showRecipe(id) {
-  const recipe = recipes.find((item) => item.id === id);
+async function showRecipe(id) {
+  let recipe = recipes.find((item) => item.id === id) || apiRecipes.find((item) => item.id === id);
   if (!recipe) return;
   stopTimer();
   exitCookMode();
   state.activeRecipe = recipe;
   state.timerDurationSeconds = Number.isInteger(recipe.timerMinutes) && recipe.timerMinutes > 0 ? recipe.timerMinutes * 60 : null;
   state.timerRemaining = state.timerDurationSeconds;
+  if (recipe.mealId) {
+    dialogContent.innerHTML = `<p class="api-detail-loading" role="status">Cargando ingredientes e instrucciones...</p>`;
+    dialog.showModal();
+    try {
+      recipe = await fetchMealDetails(recipe);
+      state.activeRecipe = recipe;
+    } catch (error) {
+      console.error(`No se pudo cargar el detalle de ${recipe.name}.`, error);
+      dialogContent.innerHTML = `<section class="api-detail-error" role="alert"><h2 id="dialog-title">No se pudo cargar la receta</h2><p>Comprueba tu conexión o inténtalo de nuevo. Si ya habías consultado esta receta, vuelve a conectarte para cargarla y guardarla offline.</p><button class="text-button" type="button" data-retry-recipe="${escapeHTML(state.activeRecipe.id)}">Intentar de nuevo</button></section>`;
+      announce("No fue posible cargar los ingredientes y pasos.");
+      return;
+    }
+    apiRecipes = apiRecipes.map((item) => item.id === recipe.id ? { ...item, ...recipe } : item);
+    renderRecipes();
+  }
+  renderRecipeDetails(recipe);
+  dialog.showModal();
+  dialog.querySelector(".close-dialog").focus();
+}
+
+function renderRecipeDetails(recipe) {
+  const translation = recipe.translated ? recipe.translation : null;
+  const displayName = translation?.name || recipe.name;
+  const displayDescription = translation?.description || recipe.description;
+  const displayIngredients = translation?.ingredients || recipe.ingredients;
+  const displaySteps = translation?.steps || recipe.steps;
+  const translationStatus = recipe.translation
+    ? "Traducción automática: puede contener errores o conservar términos en inglés. Contrástala con la receta original."
+    : "";
   dialogContent.innerHTML = `
     <section class="detail-hero">
-      <img class="detail-image" src="${recipe.image}" alt="${recipe.name}" data-fallback="${placeholderImage}">
-      <div><p class="eyebrow">${recipe.category.toUpperCase()}</p><h2 class="detail-title" id="dialog-title">${recipe.name}</h2>
-      <p class="detail-description">${recipe.description}</p>
-      <div class="detail-time-total"><span>Tiempo total estimado</span><strong>${formatDuration(recipe.time)}</strong><small>Incluye preparación, cocción y los tiempos de reposo indicados.</small></div>
-      <div class="detail-meta"><span>${recipe.difficulty}</span>${recipe.timerMinutes ? `<span>⏱ ${recipe.timerLabel}: ${recipe.timerMinutes} min</span>` : "<span>Sin cocción cronometrada</span>"}</div></div>
+      <img class="detail-image" src="${escapeHTML(recipe.image)}" alt="${escapeHTML(displayName)}" data-fallback="${placeholderImage}">
+      <div><p class="eyebrow">${escapeHTML(recipe.category.toUpperCase())}</p><h2 class="detail-title" id="dialog-title">${escapeHTML(displayName)}</h2>
+      <p class="detail-description">${escapeHTML(displayDescription)}</p>
+      ${recipe.time ? `<div class="detail-time-total"><span>${recipe.timeEstimated ? "Tiempo total aproximado" : "Tiempo total estimado"}</span><strong>${escapeHTML(formatDuration(recipe.time))}</strong><small>${recipe.timeEstimated ? "Estimación orientativa calculada a partir de los ingredientes, pasos y duraciones mencionadas; puede variar." : "Incluye preparación, cocción y los tiempos de reposo indicados."}${recipe.sourceUrl ? ` <a href="${escapeHTML(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">Ver receta original</a>` : ""}</small></div>` : ""}
+      <div class="detail-meta"><span>${escapeHTML(recipe.difficulty)}</span>${recipe.timerMinutes ? `<span>⏱ ${escapeHTML(recipe.timerLabel)}: ${recipe.timerMinutes} min</span>` : `<span>${recipe.mealId ? "Temporizador ajustable" : "Sin cocción cronometrada"}</span>`}</div></div>
     </section>
+    ${recipe.mealId ? `<section class="translation-tools" aria-label="Idioma de la receta"><button class="text-button translation-button" id="toggle-translation" type="button" ${state.translationPending ? "disabled" : ""}>${state.translationPending ? "Traduciendo receta..." : recipe.translated ? "Ver original" : "Traducir al español"}</button><p class="translation-note" id="translation-status" role="status" aria-live="polite">${escapeHTML(translationStatus)}</p>${recipe.sourceUrl ? `<a class="source-recipe-link" href="${escapeHTML(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">Consultar la receta original ↗</a>` : ""}</section>` : ""}
     <div class="recipe-columns">
-      <section aria-labelledby="ingredients-title"><h3 id="ingredients-title">Ingredientes</h3><ul class="ingredient-list">${recipe.ingredients.map((item) => `<li>${item}</li>`).join("")}</ul></section>
-      <section aria-labelledby="steps-title"><h3 id="steps-title">Paso a paso</h3><ol class="step-list">${recipe.steps.map((step) => `<li>${step}</li>`).join("")}</ol></section>
+      <section aria-labelledby="ingredients-title"><h3 id="ingredients-title">Ingredientes</h3><ul class="ingredient-list">${displayIngredients.map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul></section>
+      <section aria-labelledby="steps-title"><h3 id="steps-title">Paso a paso</h3><ol class="step-list">${displaySteps.map((step) => `<li>${escapeHTML(step)}</li>`).join("")}</ol></section>
     </div>
     <section class="timer-panel" aria-label="Temporizador de preparación">
-      <div class="timer-heading"><div><strong>${recipe.timerLabel || "Temporizador opcional"}</strong><p class="timer-description">${recipe.timerMinutes ? "Ajusta el tiempo sugerido para este proceso. Los reposos y la refrigeración se indican aparte." : "Esta receta no necesita cocción cronometrada. Si quieres, configura un temporizador para una tarea puntual."}</p></div><span class="timer-display" id="timer-display" role="timer" aria-live="off">${formatTime(state.timerRemaining)}</span></div>
+      <div class="timer-heading"><div><strong>${escapeHTML(recipe.timerLabel || "Temporizador opcional")}</strong><p class="timer-description">${recipe.timerMinutes ? "Ajusta el tiempo sugerido para este proceso. Los reposos y la refrigeración se indican aparte." : recipe.mealId ? "Elige un tiempo para recibir un recordatorio durante la preparación." : "Esta receta no necesita cocción cronometrada. Si quieres, configura un temporizador para una tarea puntual."}</p></div><span class="timer-display" id="timer-display" role="timer" aria-live="off">${formatTime(state.timerRemaining)}</span></div>
       <div class="timer-controls">
         <div class="timer-adjustment" aria-label="Ajustar duración en minutos">
           <button class="timer-adjust-button" type="button" id="timer-decrease" aria-label="Restar un minuto">−</button>
@@ -181,9 +561,46 @@ function showRecipe(id) {
   dialogContent.querySelector("#timer-decrease").addEventListener("click", () => adjustTimerMinutes(-1));
   dialogContent.querySelector("#timer-increase").addEventListener("click", () => adjustTimerMinutes(1));
   dialogContent.querySelector("#cook-mode").addEventListener("click", toggleCookMode);
+  const translationButton = dialogContent.querySelector("#toggle-translation");
+  if (translationButton) translationButton.addEventListener("click", () => toggleRecipeTranslation(recipe));
   dialogContent.querySelectorAll("img[data-fallback]").forEach((img) => img.addEventListener("error", useFallbackImage, { once: true }));
-  dialog.showModal();
-  dialog.querySelector(".close-dialog").focus();
+}
+
+async function toggleRecipeTranslation(recipe) {
+  if (!recipe) return;
+  if (recipe.translation) {
+    recipe.translated = !recipe.translated;
+    saveMealDetails(recipe);
+    renderRecipeDetails(recipe);
+    return;
+  }
+
+  state.translationPending = true;
+  renderRecipeDetails(recipe);
+  const status = dialogContent.querySelector("#translation-status");
+  if (status) status.textContent = "Traduciendo ingredientes y pasos...";
+  try {
+    recipe.translation = await translateMealRecipe(recipe);
+    recipe.translated = true;
+    saveMealDetails(recipe);
+    if (state.activeRecipe?.id === recipe.id) {
+      state.activeRecipe = recipe;
+      renderRecipeDetails(recipe);
+    }
+  } catch (error) {
+    console.error("No se pudo traducir la receta.", error);
+    state.translationPending = false;
+    if (state.activeRecipe?.id === recipe.id) {
+      renderRecipeDetails(recipe);
+      const translationStatus = dialogContent.querySelector("#translation-status");
+      if (translationStatus) translationStatus.textContent = `${error.message} La receta original sigue disponible.`;
+    }
+    announce("No se pudo traducir la receta. Puedes consultar la versión original.");
+    return;
+  } finally {
+    state.translationPending = false;
+  }
+  if (state.activeRecipe?.id === recipe.id) renderRecipeDetails(recipe);
 }
 
 function useFallbackImage(event) {
@@ -375,6 +792,15 @@ document.querySelector("#category-filters").addEventListener("click", (event) =>
   renderCategories();
   renderRecipes();
 });
+refreshDessertsButton.addEventListener("click", loadDesserts);
+loadMoreDessertsButton.addEventListener("click", () => {
+  state.visibleApiCount += API_PAGE_SIZE;
+  renderRecipes();
+});
+dialogContent.addEventListener("click", (event) => {
+  const retryButton = event.target.closest("[data-retry-recipe]");
+  if (retryButton) showRecipe(retryButton.dataset.retryRecipe);
+});
 document.querySelector("#favorites-toggle").addEventListener("click", () => {
   state.favoritesOnly = !state.favoritesOnly;
   renderRecipes();
@@ -417,6 +843,7 @@ document.addEventListener("visibilitychange", async () => {
   }
 });
 window.addEventListener("online", setConnectionStatus);
+window.addEventListener("online", loadDesserts);
 window.addEventListener("offline", setConnectionStatus);
 
 loadFavorites();
@@ -424,3 +851,7 @@ renderCategories();
 renderRecipes();
 setConnectionStatus();
 registerServiceWorker();
+setCatalogStatus(apiRecipes.length
+  ? `Recetas adicionales guardadas en este dispositivo: ${apiRecipes.length}.`
+  : "Cargando más recetas...");
+loadDesserts();

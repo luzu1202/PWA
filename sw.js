@@ -1,14 +1,15 @@
 "use strict";
 
-const CACHE_VERSION = "dulce-pausa-v8";
+const CACHE_VERSION = "dulce-pausa-v17-recetas";
 const APP_CACHE = `${CACHE_VERSION}-app`;
 const PHOTO_CACHE = `${CACHE_VERSION}-photos`;
+const API_CACHE = `${CACHE_VERSION}-api`;
 const FALLBACK_IMAGE = "./assets/postre-placeholder.svg";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=tiramisu-85",
-  "./script.js",
+  "./styles.css?v=tiramisu-87",
+  "./script.js?v=translation-estimates-v16",
   "./manifest.json",
   "./assets/icon.svg",
   FALLBACK_IMAGE
@@ -42,7 +43,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const cacheNames = await caches.keys();
-    await Promise.all(cacheNames.filter((name) => name.startsWith("dulce-pausa-") && ![APP_CACHE, PHOTO_CACHE].includes(name)).map((name) => caches.delete(name)));
+    await Promise.all(cacheNames.filter((name) => name.startsWith("dulce-pausa-") && ![APP_CACHE, PHOTO_CACHE, API_CACHE].includes(name)).map((name) => caches.delete(name)));
     await self.clients.claim();
   })());
 });
@@ -85,6 +86,38 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.hostname === "images.unsplash.com") {
+    event.respondWith((async () => {
+      const cache = await caches.open(PHOTO_CACHE);
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      try {
+        const response = await fetch(request);
+        if (response.ok || response.type === "opaque") await cache.put(request, response.clone());
+        return response;
+      } catch {
+        return (await caches.match(FALLBACK_IMAGE)) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  if (url.hostname === "www.themealdb.com" && url.pathname.startsWith("/api/json/v1/")) {
+    event.respondWith((async () => {
+      const cache = await caches.open(API_CACHE);
+      try {
+        const response = await fetch(request);
+        if (response.ok) await cache.put(request, response.clone());
+        return response;
+      } catch (error) {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        throw error;
+      }
+    })());
+    return;
+  }
+
+  if (url.hostname === "www.themealdb.com" && url.pathname.startsWith("/images/")) {
     event.respondWith((async () => {
       const cache = await caches.open(PHOTO_CACHE);
       const cached = await cache.match(request);

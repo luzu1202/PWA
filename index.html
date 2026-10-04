@@ -8,11 +8,11 @@
     <title>Dulce Pausa — Recetas de postres</title>
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="styles.css?v=tiramisu-85">
+    <link rel="stylesheet" href="styles.css?v=tiramisu-87">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="script.js" defer></script>
+    <script src="script.js?v=translation-estimates-v16" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -62,8 +62,13 @@
           <div class="category-filters" id="category-filters" aria-label="Filtrar por categoría"></div>
         </div>
 
+        <div class="catalog-toolbar">
+          <p id="catalog-status" role="status" aria-live="polite">Preparando más recetas...</p>
+          <button class="text-button" id="refresh-desserts" type="button">Actualizar recetas</button>
+        </div>
         <p class="results-summary" id="results-summary" aria-live="polite"></p>
         <div class="recipe-grid" id="recipe-grid"></div>
+        <button class="load-more-button" id="load-more-desserts" type="button" hidden>Ver más recetas</button>
         <div class="empty-state" id="empty-state" hidden>
           <span aria-hidden="true">🍰</span>
           <h3>Aún no encontramos ese antojo</h3>
@@ -74,7 +79,7 @@
 
       <section class="offline-note" aria-label="Disponibilidad sin conexión">
         <span class="offline-icon" aria-hidden="true">⌁</span>
-        <div><strong>Tu recetario te acompaña</strong><p>Guarda tus favoritos y vuelve a ellos incluso sin conexión.</p></div>
+        <div><strong>Tu recetario te acompaña</strong><p>Las recetas guardadas y las consultadas anteriormente también están disponibles sin conexión.</p></div>
         <span class="offline-badge">LISTO PARA OFFLINE</span>
       </section>
     </main>
