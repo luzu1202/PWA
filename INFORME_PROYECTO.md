@@ -10,7 +10,7 @@ Las metas concretas traducen el objetivo general en funcionalidades verificables
 
 - Presentar ocho recetas propias y ampliar el catálogo con postres obtenidos desde TheMealDB mediante Fetch API.
 - Permitir búsquedas en tiempo real por nombre del catálogo, descripción e ingredientes de las recetas locales, además de filtros por categoría.
-- Ofrecer instrucciones e ingredientes detallados, temporizador y modo cocina.
+- Ofrecer instrucciones e ingredientes detallados y un temporizador ajustable.
 - Permitir traducir recetas internacionales al español bajo demanda y conservar la traducción para su lectura offline.
 - Mostrar estimaciones orientativas del tiempo de preparación para recetas que no publican una duración, diferenciándolas de tiempos comprobados y enlazando la fuente original cuando está disponible.
 - Mostrar una dificultad aproximada para cada receta internacional cuando el catálogo no publica un nivel, indicándola explícitamente como estimación y ajustándola al cargar el detalle.
@@ -96,7 +96,7 @@ Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midn
 
 ### 6.3 `script.js`
 
-Implementa las ocho recetas locales, consulta la categoría Dessert y obtiene los detalles remotos con Fetch API, bajo demanda. Presenta doce resultados externos por bloque, búsqueda y filtros, favoritos, estados de carga/error y persistencia para uso offline. Normaliza y escapa el contenido remoto antes de insertarlo en el HTML. Los 52 niveles comprobados en la fuente se conservan con su frase original y URL; el detalle enlaza la evidencia. Para otras recetas sin dificultad publicada o verificada se calcula una estimación heurística y se identifica claramente como orientativa; el detalle se afina con ingredientes, pasos y técnicas, y la normalización de caché repara los valores antiguos. La duración estimada también se identifica como aproximada; los enlaces originales seguros permiten contrastar las recetas. El botón de traducción transforma nombre, descripción, ingredientes y pasos bajo demanda, limita segmentos y consumo diario, informa errores y persiste el resultado sin destruir el original. Las recetas locales conservan sus duraciones, instrucciones, temporizador ajustable y modo cocina. El Service Worker se registra y cachea recursos esenciales, respuestas de recetas e imágenes.
+Implementa las ocho recetas locales, consulta la categoría Dessert y obtiene los detalles remotos con Fetch API, bajo demanda. Presenta doce resultados externos por bloque, búsqueda y filtros, favoritos, estados de carga/error y persistencia para uso offline. Normaliza y escapa el contenido remoto antes de insertarlo en el HTML. Los 52 niveles comprobados en la fuente se conservan con su frase original y URL; el detalle enlaza la evidencia. Para otras recetas sin dificultad publicada o verificada se calcula una estimación heurística y se identifica claramente como orientativa; el detalle se afina con ingredientes, pasos y técnicas, y la normalización de caché repara los valores antiguos. La duración estimada también se identifica como aproximada; los enlaces originales seguros permiten contrastar las recetas. El botón de traducción transforma nombre, descripción, ingredientes y pasos bajo demanda, limita segmentos y consumo diario, informa errores y persiste el resultado sin destruir el original. Las recetas locales conservan sus duraciones, instrucciones y temporizador ajustable. El Service Worker se registra y cachea recursos esenciales, respuestas de recetas e imágenes.
 
 ### 6.4 `manifest.json`
 
@@ -104,7 +104,7 @@ Establece nombre, nombre corto, idioma, ámbito, ruta de inicio, colores, visual
 
 ### 6.5 `sw.js`
 
-Versiona la caché actual como `dulce-pausa-v28-dificultades-fuentes`, elimina versiones antiguas en la activación, reclama las páginas abiertas y administra solicitudes de navegación, recursos propios, imágenes de Unsplash y TheMealDB, así como sus respuestas JSON. La instalación de recursos esenciales es obligatoria; la precarga de fotografías es tolerante a fallos de red.
+Versiona la caché actual como `dulce-pausa-v29-sin-modo-cocina`, elimina versiones antiguas en la activación, reclama las páginas abiertas y administra solicitudes de navegación, recursos propios, imágenes de Unsplash y TheMealDB, así como sus respuestas JSON. La instalación de recursos esenciales es obligatoria; la precarga de fotografías es tolerante a fallos de red.
 
 ### 6.6 Recursos visuales
 
@@ -120,7 +120,7 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 - Paleta Buttermilk/Midnight Blue validada en navegador: fondo `rgb(255, 242, 186)`, portada `rgb(15, 60, 101)` y títulos `rgb(15, 60, 101)`.
 - Fuentes calculadas como Poppins para lectura, Playfair Display para titulares y Great Vibes para el acento caligráfico.
 - Búsqueda por nombre en las recetas locales y remotas cargadas, descripción e ingredientes locales, filtros por categoría y vista de favoritos.
-- Detalle con ingredientes, pasos ordenados, tiempo total separado de las fases activas, temporizador ajustable por minuto y modo cocina.
+- Detalle con ingredientes, pasos ordenados, tiempo total separado de las fases activas y temporizador ajustable por minuto.
 - Persistencia local de favoritos, indicador online/offline e instalación PWA.
 - Integración Fetch API para lista y detalle, carga de doce tarjetas remotas por bloque y mensaje accesible ante errores.
 - Traducción manual bajo demanda de recetas, con advertencia de traducción automática, fallback al original, límite diario local y persistencia offline.
@@ -144,7 +144,6 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 | Temporizador de fase activa | Verificado en Pages: brownies inicia en `25:00`, se ajusta a `26:00`, decrementa a `25:59` y reinicia en `26:00`; la prueba previa confirmó el bloqueo de edición durante la marcha |
 | Temporizador en recetas sin cocción cronometrada | Verificado: tiramisú y pay no cargan la espera larga en el temporizador; se puede configurar un temporizador opcional manualmente |
 | Temporizador en segundo plano | El tiempo restante se calcula desde una hora objetivo, no contando ticks; se evita acumular deriva si el navegador limita intervalos |
-| Modo cocina | Implementado; la retención de pantalla utiliza Screen Wake Lock cuando el navegador la admite |
 | Estimación para receta internacional sin tiempo | Verificada en Æbleskiver: muestra 1 h 25 min como tiempo aproximado, usando instrucciones/ingredientes y sin atribuir la duración a la fuente |
 | Dificultad internacional investigada | 168 registros contrastados: 52 fuentes publican dificultad explícita, 93 no muestran nivel, 1 incluye “Easy” solo como tag y 22 casos no pudieron verificarse |
 | Cobertura visible de dificultad | Verificada localmente: las 168 recetas tienen nivel, ninguna queda «No especificada»; 52 muestran nivel contrastado y 116 una estimación marcada como aproximada |
@@ -157,7 +156,7 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 | Disponibilidad offline | Verificada en navegador: con la conexión desactivada, el shell cargó, el Service Worker controló la página y Æbleskiver abrió con 10 ingredientes, 12 pasos y su traducción guardada |
 | Manifiesto con modo `standalone` e icono | Implementado |
 | Registro y control del Service Worker | Verificados en Pages: Service Worker activo, controlador presente y scope restringido a `https://luzu1202.github.io/PWA/` |
-| Actualización de shell y fotos | Caché local actual `dulce-pausa-v28-dificultades-fuentes`; CSS `styles.css?v=tiramisu-88` y JavaScript `script.js?v=dessert-difficulty-sources-v28` |
+| Actualización de shell y fotos | Caché local actual `dulce-pausa-v29-sin-modo-cocina`; CSS `styles.css?v=tiramisu-89` y JavaScript `script.js?v=remove-cook-mode-v29` |
 | Publicación en GitHub Pages | Verificada: respuesta HTTP 200 en [Dulce Pausa](https://luzu1202.github.io/PWA/) |
 | Workflow de GitHub Actions | Ejecución [37101217479](https://github.com/luzu1202/PWA/actions/runs/37101217479) completada correctamente para el commit `9f7706445074054ef49a98ce52157ff7e23bd28a` |
 | Instalación del Service Worker en GitHub Pages | Verificada en la revisión publicada: scope `https://luzu1202.github.io/PWA/`, worker activo y cachés de la versión `dulce-pausa-v8` |
@@ -174,10 +173,10 @@ El Service Worker no puede operar al abrir `index.html` directamente mediante `f
 
 La arquitectura no agrega dependencias de runtime ni servidor propio. El contenido remoto se normaliza, las cadenas se escapan antes de insertarse en el DOM, las solicitudes esperan como máximo doce segundos y los errores se hacen visibles sin desactivar el catálogo local. La UI carga doce tarjetas externas por bloque; las fotos se cargan de forma diferida. La lista y los últimos veinte detalles se guardan en `localStorage`; las respuestas y fotos descargadas también usan Cache API. En navegador local se comprobaron el catálogo, los detalles de Æbleskiver, su estimación, el enlace original, la traducción automática, la alternancia al original, el guardado de la traducción y la ausencia de términos técnicos en el texto visible. Con la conexión desactivada se volvió a cargar la aplicación y se abrió el detalle traducido guardado, confirmando el uso offline. Lighthouse e instalación en dispositivo físico no se ejecutaron. La auditoría técnica actualizada está en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
 
-La revisión publicada previamente verificó el texto Buttermilk sobre el hero Midnight Blue, con contraste 10.06:1, y el encuadre del tiramisú (`object-position: center 85%`) en tarjeta y detalle. Esta revisión local incrementa la caché del Service Worker a `dulce-pausa-v28-dificultades-fuentes` para incorporar los niveles publicados en fuentes originales y diferenciar las estimaciones del resto, además de las mejoras de tarjetas y deduplicación ya documentadas; no invalida la versión desplegada hasta que se publique.
+La revisión publicada previamente verificó el texto Buttermilk sobre el hero Midnight Blue, con contraste 10.06:1, y el encuadre del tiramisú (`object-position: center 85%`) en tarjeta y detalle. Esta revisión local incrementa la caché del Service Worker a `dulce-pausa-v29-sin-modo-cocina`; además de los niveles publicados en fuentes originales y los cambios de tarjetas ya documentados, elimina el modo cocina y toda su lógica Wake Lock, manteniendo el temporizador de cada receta.
 
 La publicación vigente antes de estos cambios corresponde al commit `95ec7c32ae2f10eafd074fca2b164ebe8555663d`; la validación y el despliegue finalizaron correctamente en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37180538713). Esta revisión de dificultad permanece en el entorno local y no se ha enviado a GitHub.
 
 ## 8. Resumen
 
-Dulce Pausa es una PWA para explorar ocho recetas locales y un catálogo internacional de postres. Permite buscar, guardar favoritos, consultar y traducir instrucciones, ver tiempos estimados y niveles de dificultad respaldados por fuente cuando están disponibles, usar un temporizador y activar el modo cocina. Se construyó con HTML, CSS y JavaScript nativos, un manifiesto instalable, un Service Worker con caché offline y recursos visuales locales de respaldo.
+Dulce Pausa es una PWA para explorar ocho recetas locales y un catálogo internacional de postres. Permite buscar, guardar favoritos, consultar y traducir instrucciones, ver tiempos estimados y niveles de dificultad respaldados por fuente cuando están disponibles, y usar un temporizador ajustable. Se construyó con HTML, CSS y JavaScript nativos, un manifiesto instalable, un Service Worker con caché offline y recursos visuales locales de respaldo.

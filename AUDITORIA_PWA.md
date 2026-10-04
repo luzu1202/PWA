@@ -10,7 +10,7 @@ Revisión de HTML, CSS, JavaScript, manifiesto y Service Worker, incluyendo el c
 
 ## Resultado ejecutivo
 
-**Estado: dificultad investigada y fuente enlazada cuando existe; cambios solo locales.** Se contrastaron 168 postres: 52 fuentes publican un nivel explícito, 93 no lo indican, una usa “Easy” únicamente como tag y 22 casos no se pudieron verificar. El navegador mostró niveles en las 168 tarjetas; las 52 verificadas presentan etiqueta de fuente y el resto aparece claramente como estimación. TheMealDB no ofrece un campo normalizado de dificultad. Esta actualización no se ha enviado a GitHub.
+**Estado: catálogo verificado y modo cocina eliminado de la aplicación.** Se contrastaron 168 postres: 52 fuentes publican un nivel explícito, 93 no lo indican, una usa “Easy” únicamente como tag y 22 casos no se pudieron verificar. Las dificultades se muestran con la fuente o como estimación. Se retiró la interfaz y la lógica Wake Lock de cocina; el temporizador permanece. Esta actualización no se ha enviado a GitHub.
 
 ## Hallazgos
 
@@ -104,12 +104,11 @@ Los siguientes resultados corresponden a la publicación previa, no a la integra
 - Las familias Poppins, Playfair Display y Great Vibes se solicitan a Google Fonts; si no están disponibles, se utilizan las familias de reserva del sistema.
 - La interfaz ofrece etiquetas accesibles, foco visible, estados de botones y adaptación a movimiento reducido.
 - Los recursos esenciales se cachean antes de activar la nueva versión; la precarga remota de imágenes tolera fallos y no bloquea el shell.
-- La caché de desarrollo actual del Service Worker se versiona como `dulce-pausa-v28-dificultades-fuentes`; incluye respuestas del catálogo e imágenes descargadas. La publicación previa conserva la versión desplegada con el commit `95ec7c3`.
+- La caché de desarrollo actual del Service Worker se versiona como `dulce-pausa-v29-sin-modo-cocina`; incluye respuestas del catálogo e imágenes descargadas. La publicación previa conserva la versión desplegada con el commit `ff99b59`.
 - El HTML de datos externos se escapa antes de renderizarse, y las URL de imágenes remotas se restringen a HTTPS en el host de TheMealDB.
 - Las solicitudes Fetch API se limitan a doce segundos; el fallo o el rechazo de la API no impide usar las recetas propias.
-- El modo cocina usa Screen Wake Lock cuando está disponible y comunica la limitación cuando el navegador no lo permite.
 - Lighthouse y la instalación física no se ejecutaron; no se reportan puntuaciones ni compatibilidad fuera del navegador probado.
 
 ## Conclusión
 
-La revisión publicada anteriormente (`95ec7c3`) fue validada en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37180538713), que desplegó traducción y estimaciones. Las correcciones actuales de descripciones, tiempos tempranos, deduplicación y dificultad con fuentes identificadas bajo la caché `dulce-pausa-v28-dificultades-fuentes` se comprobaron localmente y no se han enviado a GitHub. Lighthouse e instalación física no se ejecutaron.
+La revisión publicada anteriormente (`ff99b59`) fue validada en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37182618196). Esta revisión local elimina el modo cocina y mantiene temporizador, catálogo, traducción y estimaciones; todavía no se ha enviado a GitHub. Lighthouse e instalación física no se ejecutaron.

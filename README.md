@@ -1,6 +1,6 @@
 # Dulce Pausa
 
-**Dulce Pausa** es una Progressive Web App (PWA) para descubrir y preparar postres. Combina ocho recetas propias disponibles offline con un catálogo internacional. Incluye búsqueda, filtros, favoritos locales, instrucciones paso a paso, traducción automática al español, tiempo total aproximado, temporizador ajustable y modo cocina.
+**Dulce Pausa** es una Progressive Web App (PWA) para descubrir y preparar postres. Combina ocho recetas propias disponibles offline con un catálogo internacional. Incluye búsqueda, filtros, favoritos locales, instrucciones paso a paso, traducción automática al español, tiempo total aproximado y temporizador ajustable.
 
 - **Aplicación publicada:** <https://luzu1202.github.io/PWA/>
 - **Informe del proyecto:** [INFORME_PROYECTO.md](./INFORME_PROYECTO.md)
@@ -17,7 +17,6 @@
 - Botón para traducir nombre, descripción, ingredientes y pasos al español. La traducción se guarda junto al detalle para consultarla offline; requiere conexión la primera vez, es automática y puede contener errores.
 - Tiempo aproximado visible desde la tarjeta, primero orientado por el tipo de postre y luego afinado al consultar sus instrucciones. No equivale a un tiempo verificado por la fuente. Cuando existe un enlace seguro, la vista permite contrastar la receta original.
 - Favoritos guardados en `localStorage`.
-- Modo cocina, con solicitud de Screen Wake Lock en los navegadores compatibles.
 - Manifiesto instalable y Service Worker con caché del shell y precarga de fotografías.
 - Copia local del catálogo consultado y de los últimos 20 detalles abiertos para continuar la consulta offline. El Service Worker también cachea las respuestas de TheMealDB y sus imágenes cuando la red las entrega.
 - Interfaz adaptable a pantallas móviles y de escritorio.
@@ -44,7 +43,7 @@ También puede utilizarse cualquier servidor estático local que atienda los arc
 |---|---|
 | `index.html` | Estructura semántica, navegación, catálogo y diálogo de receta |
 | `styles.css` | Diseño responsivo, paleta Buttermilk/Midnight Blue y tipografía |
-| `script.js` | Catálogo local e internacional, búsqueda, filtros, traducción, favoritos, temporizador y modo cocina |
+| `script.js` | Catálogo local e internacional, búsqueda, filtros, traducción, favoritos y temporizador |
 | `manifest.json` | Metadatos, ámbito, ruta de inicio e icono instalable |
 | `sw.js` | Registro de cachés, actualizaciones y respuestas sin conexión |
 | `assets/` | Icono de la aplicación y SVG local de respaldo |

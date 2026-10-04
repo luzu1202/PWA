@@ -77,7 +77,7 @@ const placeholderImage = "assets/postre-placeholder.svg";
 const favoritesKey = "dulce-pausa-favorites";
 const MAX_TIMER_MINUTES = 24 * 60;
 let apiRecipes = [];
-const state = { category: "Todos", favoritesOnly: false, favorites: new Set(), activeRecipe: null, timerDurationSeconds: null, timerRemaining: null, timerEndTimestamp: null, timerInterval: null, wakeLock: null, toastTimeout: null, visibleApiCount: API_PAGE_SIZE, translationPending: false };
+const state = { category: "Todos", favoritesOnly: false, favorites: new Set(), activeRecipe: null, timerDurationSeconds: null, timerRemaining: null, timerEndTimestamp: null, timerInterval: null, toastTimeout: null, visibleApiCount: API_PAGE_SIZE, translationPending: false };
 const grid = document.querySelector("#recipe-grid");
 const searchInput = document.querySelector("#search-input");
 const dialog = document.querySelector("#recipe-dialog");
@@ -750,7 +750,6 @@ async function showRecipe(id) {
   let recipe = recipes.find((item) => item.id === id) || apiRecipes.find((item) => item.id === id);
   if (!recipe) return;
   stopTimer();
-  exitCookMode();
   state.activeRecipe = recipe;
   state.timerDurationSeconds = Number.isInteger(recipe.timerMinutes) && recipe.timerMinutes > 0 ? recipe.timerMinutes * 60 : null;
   state.timerRemaining = state.timerDurationSeconds;
@@ -814,14 +813,12 @@ function renderRecipeDetails(recipe) {
         <button class="timer-button primary" type="button" id="timer-start" ${state.timerRemaining === null ? "disabled" : ""}>Iniciar</button>
         <button class="timer-button" type="button" id="timer-reset">Reiniciar</button>
       </div>
-    </section>
-    <button class="cook-mode-button" id="cook-mode" type="button" aria-pressed="false">✦ Activar modo cocina</button>`;
+    </section>`;
   dialogContent.querySelector("#timer-start").addEventListener("click", toggleTimer);
   dialogContent.querySelector("#timer-reset").addEventListener("click", resetTimer);
   dialogContent.querySelector("#timer-minutes").addEventListener("input", handleTimerInput);
   dialogContent.querySelector("#timer-decrease").addEventListener("click", () => adjustTimerMinutes(-1));
   dialogContent.querySelector("#timer-increase").addEventListener("click", () => adjustTimerMinutes(1));
-  dialogContent.querySelector("#cook-mode").addEventListener("click", toggleCookMode);
   const translationButton = dialogContent.querySelector("#toggle-translation");
   if (translationButton) translationButton.addEventListener("click", () => toggleRecipeTranslation(recipe));
   dialogContent.querySelectorAll("img[data-fallback]").forEach((img) => img.addEventListener("error", useFallbackImage, { once: true }));
@@ -972,42 +969,6 @@ function resetTimer() {
   if (startButton) startButton.textContent = "Iniciar";
 }
 
-async function toggleCookMode() {
-  if (document.body.classList.contains("cook-mode-active")) {
-    exitCookMode();
-    announce("Modo cocina desactivado.");
-    return;
-  }
-  document.body.classList.add("cook-mode-active");
-  dialogContent.querySelector("#cook-mode").textContent = "✓ Desactivar modo cocina";
-  dialogContent.querySelector("#cook-mode").setAttribute("aria-pressed", "true");
-  if ("wakeLock" in navigator) {
-    try {
-      state.wakeLock = await navigator.wakeLock.request("screen");
-      state.wakeLock.addEventListener("release", () => { state.wakeLock = null; });
-      announce("Modo cocina activado. La pantalla permanecerá encendida mientras esta pestaña esté visible.");
-    } catch (error) {
-      console.error("No se pudo activar Wake Lock.", error);
-      announce("Modo cocina activo. El navegador no permitió mantener la pantalla encendida.");
-    }
-  } else {
-    announce("Modo cocina activo. Este navegador no permite evitar que la pantalla se apague.");
-  }
-}
-
-function exitCookMode() {
-  document.body.classList.remove("cook-mode-active");
-  if (state.wakeLock) {
-    state.wakeLock.release().catch((error) => console.error("No se pudo liberar Wake Lock.", error));
-    state.wakeLock = null;
-  }
-  const button = dialogContent.querySelector("#cook-mode");
-  if (button) {
-    button.textContent = "✦ Activar modo cocina";
-    button.setAttribute("aria-pressed", "false");
-  }
-}
-
 function toggleFavorite(id) {
   const wasFavorite = state.favorites.has(id);
   if (wasFavorite) {
@@ -1086,21 +1047,11 @@ grid.addEventListener("click", (event) => {
 grid.addEventListener("error", useFallbackImage, true);
 dialog.addEventListener("close", () => {
   stopTimer();
-  exitCookMode();
 });
 document.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     searchInput.focus();
-  }
-});
-document.addEventListener("visibilitychange", async () => {
-  if (document.visibilityState === "visible" && document.body.classList.contains("cook-mode-active") && "wakeLock" in navigator && !state.wakeLock) {
-    try {
-      state.wakeLock = await navigator.wakeLock.request("screen");
-    } catch (error) {
-      console.error("No se pudo reactivar Wake Lock.", error);
-    }
   }
 });
 window.addEventListener("online", setConnectionStatus);
