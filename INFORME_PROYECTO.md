@@ -73,7 +73,7 @@ Define la página en español con encabezado, presentación, filtros, campo de b
 
 ### 6.2 `styles.css`
 
-Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. La descripción del hero usa Buttermilk para mantener contraste sobre el fondo azul. La ilustración se reemplazó por una fotografía Unsplash de pastel de chocolate. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido.
+Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. La descripción del hero usa Buttermilk para mantener contraste sobre el fondo azul. La ilustración se reemplazó por una fotografía Unsplash de pastel de chocolate. El encuadre específico del tiramisú usa `object-position: center 85%` tanto en la tarjeta como en el detalle, para mostrar mejor el postre dentro del recorte. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido.
 
 ### 6.3 `script.js`
 
@@ -114,27 +114,32 @@ Los resultados se describen a partir de las funciones implementadas y de las ver
 | Búsqueda, filtros y persistencia de favoritos | Verificados en navegador: «mascarpone» devuelve 1 receta y «Pasteles» muestra 2; favorito persiste en `localStorage` |
 | Diálogo y pasos de receta | Verificados: detalle de brownies abre, presenta 8 ingredientes y 4 pasos, y cierra correctamente |
 | Tiempo total y esperas | Verificados en tarjetas y detalle: tiramisú 4 h 35 min, pay de limón 3 h 45 min, cheesecake 5 h 45 min y flan 3 h 15 min; notas aclaran refrigeración/reposo |
-| Temporizador de fase activa | Verificado: brownies inicia en 25 min, se ajusta a 26, decrementa a 25:59, bloquea edición durante la marcha y reinicia según el ajuste |
+| Temporizador de fase activa | Verificado en Pages: brownies inicia en `25:00`, se ajusta a `26:00`, decrementa a `25:59` y reinicia en `26:00`; la prueba previa confirmó el bloqueo de edición durante la marcha |
 | Temporizador en recetas sin cocción cronometrada | Verificado: tiramisú y pay no cargan la espera larga en el temporizador; se puede configurar un temporizador opcional manualmente |
 | Temporizador en segundo plano | El tiempo restante se calcula desde una hora objetivo, no contando ticks; se evita acumular deriva si el navegador limita intervalos |
 | Modo cocina | Implementado; la retención de pantalla utiliza Screen Wake Lock cuando el navegador la admite |
 | Manifiesto con modo `standalone` e icono | Implementado |
-| Registro y control del Service Worker | Verificados en `localhost`; Service Worker activo y controlando la página |
-| Actualización del shell tras el cambio del temporizador y las imágenes | Versión de caché del Service Worker incrementada a `dulce-pausa-v4` |
+| Registro y control del Service Worker | Verificados en Pages: Service Worker activo, controlador presente y scope restringido a `https://luzu1202.github.io/PWA/` |
+| Actualización de shell y fotos | Caché actual `dulce-pausa-v8`; la hoja de estilos usa la URL versionada `styles.css?v=tiramisu-85` |
 | Publicación en GitHub Pages | Verificada: respuesta HTTP 200 en [Dulce Pausa](https://luzu1202.github.io/PWA/) |
-| Workflow de GitHub Actions | Ejecución [37095116436](https://github.com/luzu1202/PWA/actions/runs/37095116436) completada correctamente; validación y despliegue exitosos |
-| Instalación del Service Worker en GitHub Pages | Verificada: scope `https://luzu1202.github.io/PWA/`, control activo y cachés con 7 recursos esenciales y 8 fotografías |
-| Caché de shell y respuesta offline | Verificados: recarga sin red muestra la aplicación, 8 tarjetas y estilos aplicados |
-| Caché de fotografías en la versión desplegada previamente | Verificada: 8 imágenes precargadas y las 8 visibles tras recargar sin red |
+| Workflow de GitHub Actions | Ejecución [37101217479](https://github.com/luzu1202/PWA/actions/runs/37101217479) completada correctamente para el commit `9f7706445074054ef49a98ce52157ff7e23bd28a` |
+| Instalación del Service Worker en GitHub Pages | Verificada en la revisión publicada: scope `https://luzu1202.github.io/PWA/`, worker activo y cachés de la versión `dulce-pausa-v8` |
+| Caché offline del shell | Recursos del shell comprobados en la Cache API; no se pudo completar una recarga offline automatizada en esta repetición de la auditoría |
+| Catálogo y recursos visuales publicados | 8 tarjetas y 8 imágenes del catálogo cargadas; fotografía del flan correcta y carga confirmada |
+| Encuadre del tiramisú | Verificado en Pages: la imagen de tarjeta y detalle carga con `object-position: 50% 85%` |
+| Búsqueda y filtros publicados | «mascarpone» devuelve 1 receta y «Pasteles» muestra 2 |
+| Contraste y paleta publicados | Hero: texto `rgb(255, 242, 186)` sobre fondo `rgb(15, 60, 101)`, contraste 10.06:1 |
 | Lighthouse / métricas de rendimiento | No ejecutado; no se reportan puntuaciones sintéticas |
 
-El Service Worker no puede operar al abrir `index.html` directamente mediante `file://`; debe servirse desde `localhost` o HTTPS. Las fotos quedan disponibles offline cuando la precarga o una visita online logra almacenarlas; para cada fallo se conserva un SVG local de respaldo. La prueba offline se ejecutó en `localhost` con la red del navegador deshabilitada después de cargar la aplicación.
+El Service Worker no puede operar al abrir `index.html` directamente mediante `file://`; debe servirse desde `localhost` o HTTPS. Las fotos quedan disponibles offline cuando la precarga o una visita online logra almacenarlas; para cada fallo se conserva un SVG local de respaldo. En esta repetición se confirmó que los recursos del shell y las nueve fotos están en las cachés de Pages, pero la automatización no completó una recarga con la red deshabilitada; no se atribuye ese resultado al build actual.
 
 ### 7.3 Auditoría de código y conclusiones
 
-La arquitectura evita dependencias de ejecución y limita el registro persistente a identificadores de favoritos. El catálogo carga imágenes de forma diferida; la instalación precarga las fotografías en paralelo sin permitir que un error externo impida guardar el shell. Los recursos esenciales tienen una estrategia offline explícita. El CSS se adapta a móviles y teclado, la lista se actualiza sin recargar la página y el temporizador se detiene al cerrar la receta. Se confirmó en navegador el registro y control del Service Worker en localhost y Pages, la carga de las ocho imágenes almacenadas y la navegación sin red en localhost. Lighthouse y la instalación en un dispositivo físico no se ejecutaron, por lo que no se atribuyen puntuaciones ni resultados de esos entornos. La auditoría técnica se documenta en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
+La arquitectura evita dependencias de ejecución y limita el registro persistente a identificadores de favoritos. El catálogo carga imágenes de forma diferida; la instalación precarga las fotografías en paralelo sin permitir que un error externo impida guardar el shell. Los recursos esenciales tienen una estrategia offline explícita. El CSS se adapta a móviles y teclado, la lista se actualiza sin recargar la página y el temporizador se detiene al cerrar la receta. En Pages se verificaron el controlador del Service Worker, ocho tarjetas, ocho imágenes, el buscador, el filtro, el temporizador y el detalle con la foto correcta del flan; también se confirmó `object-position: 50% 85%` para la foto del tiramisú en tarjeta y detalle. El Service Worker precarga siete recursos esenciales y nueve fotografías (ocho recetas más hero); la caché observada puede incluir variantes de navegación consultadas. La prueba de recarga offline no se completó en esta sesión. Lighthouse y la instalación en un dispositivo físico no se ejecutaron, por lo que no se atribuyen puntuaciones ni resultados de esos entornos. La auditoría técnica se documenta en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
 
-En la última revisión se detectó que un navegador que ya había visitado Pages aún podía reutilizar una hoja CSS HTTP anterior. La referencia a CSS lleva ahora una consulta de versión y la caché del Service Worker sube a `dulce-pausa-v5`, para solicitar los estilos actualizados tras desplegar. La copia local verificó el contraste Buttermilk sobre Midnight Blue de 10.06:1, ambas fotografías nuevas de Unsplash con respuesta JPEG y visualización correcta.
+En la última revisión publicada se verificó el texto Buttermilk sobre el hero Midnight Blue con contraste 10.06:1 y el encuadre centrado en alto del tiramisú (`object-position: center 85%`) en tarjeta y detalle. La URL CSS lleva la consulta `?v=tiramisu-85` y el Service Worker usa la caché `dulce-pausa-v8` para renovar los estilos en instalaciones anteriores. El hero, la foto del flan y las ocho fotografías del catálogo se cargaron correctamente en el navegador; las nueve imágenes están incluidas en la caché de fotografías.
+
+La publicación más reciente corresponde al commit `9f7706445074054ef49a98ce52157ff7e23bd28a`; la validación y el despliegue finalizaron correctamente en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37101217479). Esta actualización documental se realiza después de esa publicación y permanece local; no forma parte del despliegue.
 
 ## 8. Resumen
 
