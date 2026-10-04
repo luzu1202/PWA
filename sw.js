@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_VERSION = "dulce-pausa-v23-descripciones";
+const CACHE_VERSION = "dulce-pausa-v28-dificultades-fuentes";
 const APP_CACHE = `${CACHE_VERSION}-app`;
 const PHOTO_CACHE = `${CACHE_VERSION}-photos`;
 const API_CACHE = `${CACHE_VERSION}-api`;
@@ -8,8 +8,8 @@ const FALLBACK_IMAGE = "./assets/postre-placeholder.svg";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=tiramisu-87",
-  "./script.js?v=personalized-dessert-cards-v23",
+  "./styles.css?v=tiramisu-88",
+  "./script.js?v=dessert-difficulty-sources-v28",
   "./manifest.json",
   "./assets/icon.svg",
   FALLBACK_IMAGE

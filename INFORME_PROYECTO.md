@@ -13,6 +13,7 @@ Las metas concretas traducen el objetivo general en funcionalidades verificables
 - Ofrecer instrucciones e ingredientes detallados, temporizador y modo cocina.
 - Permitir traducir recetas internacionales al español bajo demanda y conservar la traducción para su lectura offline.
 - Mostrar estimaciones orientativas del tiempo de preparación para recetas que no publican una duración, diferenciándolas de tiempos comprobados y enlazando la fuente original cuando está disponible.
+- Mostrar una dificultad aproximada para cada receta internacional cuando el catálogo no publica un nivel, indicándola explícitamente como estimación y ajustándola al cargar el detalle.
 - Guardar favoritos, la lista externa consultada y detalles recientes en `localStorage` para conservarlos entre sesiones y sin conexión.
 - Instalar la aplicación y almacenar los recursos esenciales mediante un manifiesto y un Service Worker.
 - Verificar la estructura, las funcionalidades principales y la estrategia de caché offline.
@@ -27,7 +28,7 @@ Las recetas suelen consultarse desde el teléfono mientras se cocina, incluso en
 
 ### 3.2 Alcance funcional
 
-El catálogo local incluye tiramisú, brownies, pay de limón, cheesecake de frutos rojos, churros, galletas con chispas, flan y tarta de manzana. El catálogo internacional solicita a TheMealDB la categoría `Dessert` y obtiene ingredientes e instrucciones solo al abrir un postre. Las recetas que no están en español se pueden traducir mediante un botón explícito; la traducción automática se marca como tal, queda guardada localmente y no reemplaza el texto original. Las duraciones faltantes se estiman en el navegador a partir de los pasos y de sus tiempos expresos, se identifican como aproximadas y pueden contrastarse con el enlace HTTPS de la fuente original. Las imágenes fotográficas se obtienen de Unsplash o TheMealDB y un SVG incluido localmente sirve como respaldo.
+El catálogo local incluye tiramisú, brownies, pay de limón, cheesecake de frutos rojos, churros, galletas con chispas, flan y tarta de manzana. El catálogo internacional solicita a TheMealDB la categoría `Dessert` y obtiene ingredientes e instrucciones solo al abrir un postre. Las recetas que no están en español se pueden traducir mediante un botón explícito; la traducción automática se marca como tal, queda guardada localmente y no reemplaza el texto original. Las duraciones faltantes se estiman en el navegador a partir de los pasos y de sus tiempos expresos, se identifican como aproximadas y pueden contrastarse con el enlace HTTPS de la fuente original. Se contrastó la dificultad de las recetas internacionales con sus páginas fuente: si la fuente publica un nivel explícito, se muestra el valor mapeado y su enlace; cuando no hay nivel explícito o no se pudo verificar, se muestra una estimación identificada claramente como tal. Las imágenes fotográficas se obtienen de Unsplash o TheMealDB y un SVG incluido localmente sirve como respaldo.
 
 ## 4. Fundamentos Teóricos
 
@@ -61,6 +62,10 @@ La traducción se solicita únicamente cuando la persona pulsa el botón corresp
 
 TheMealDB no proporciona siempre tiempos. Para que la tarjeta no quede sin duración antes de abrirse, el catálogo asigna una primera estimación orientativa por tipo de postre. Al consultar el detalle, el navegador la afina sumando duraciones expresas detectadas en los pasos y una estimación heurística de preparación; si detecta cocción sin duración indicada, utiliza un valor orientativo según el método descrito. La interfaz no presenta estos cálculos como datos comprobados externamente y, si hay una fuente HTTPS, enlaza la receta original para que se pueda consultar.
 
+### 4.8 Dificultad de las recetas internacionales
+
+TheMealDB no ofrece un campo de dificultad normalizado en el catálogo consultado. Se contrastaron los 168 registros con sus fuentes originales: 52 páginas publican un nivel explícito, 93 páginas revisadas no muestran una dificultad explícita, una usa «Easy» solo como tag sin declararlo como dificultad y 22 casos no se pudieron verificar (seis no tienen enlace de fuente y 16 páginas eran inaccesibles, incorrectas o no permitieron localizar la receta). Los niveles explícitos se guardan por ID de receta junto con su texto original, URL y equivalencia visual; las tarjetas y el detalle identifican su procedencia. Para las otras 116 recetas se mantiene una estimación heurística: el tipo de postre da el valor inicial, y los ingredientes, pasos y técnicas afinan el detalle. La UI etiqueta esos niveles como aproximados y no los atribuye a la fuente. Las ocho recetas propias mantienen sus niveles editoriales originales.
+
 ## 5. Metodología
 
 La solución se construyó como una aplicación cliente estática, con responsabilidades separadas y un recorrido de datos desde el catálogo hasta la interfaz.
@@ -71,7 +76,7 @@ La solución es una aplicación estática, sin servidor propio ni dependencias d
 
 ### 5.2 Flujo de datos
 
-Ocho recetas curadas se definen localmente en `script.js`; en paralelo, Fetch API consulta `filter.php?c=Dessert` para obtener el catálogo de TheMealDB. Los detalles se solicitan bajo demanda con `lookup.php?i={id}`. Los resultados externos se normalizan y deduplican por nombre antes de representarlos, se muestran por bloques de doce y se guardan en `localStorage`. Cada postre recibe una descripción en español basada en su nombre y, cuando están disponibles, ingredientes, método y origen. Al actualizar el detalle y el tiempo de una tarjeta, se conserva exactamente su descripción personalizada. La búsqueda por nombre, categoría y filtro de favoritos se aplican al catálogo local y a la lista externa; los ingredientes remotos se indexan después de abrir cada detalle. Los detalles y traducciones externos recientes se persisten para reutilizarlos offline. El tiempo calculado para recetas sin duración es una estimación local marcada como aproximada; el usuario puede configurar por separado el temporizador de una fase activa.
+Ocho recetas curadas se definen localmente en `script.js`; en paralelo, Fetch API consulta `filter.php?c=Dessert` para obtener el catálogo de TheMealDB. Los detalles se solicitan bajo demanda con `lookup.php?i={id}`. Los resultados externos se normalizan y deduplican por nombre antes de representarlos, se muestran por bloques de doce y se guardan en `localStorage`. Cada postre recibe una descripción en español basada en su nombre y, cuando están disponibles, ingredientes, método y origen. Al actualizar el detalle, el tiempo y la dificultad de una tarjeta, se conserva exactamente su descripción personalizada. La búsqueda por nombre, categoría y filtro de favoritos se aplican al catálogo local y a la lista externa; los ingredientes remotos se indexan después de abrir cada detalle. Los detalles y traducciones externos recientes se persisten para reutilizarlos offline. El tiempo y la dificultad calculados cuando la fuente no los publica son estimaciones locales expresamente marcadas; el usuario puede configurar por separado el temporizador de una fase activa.
 
 ### 5.3 Estrategia offline-first
 
@@ -87,11 +92,11 @@ Define la página en español con encabezado, presentación, filtros, campo de b
 
 ### 6.2 `styles.css`
 
-Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. La descripción del hero usa Buttermilk para mantener contraste sobre el fondo azul. La ilustración se reemplazó por una fotografía Unsplash de pastel de chocolate. El encuadre específico del tiramisú usa `object-position: center 85%` tanto en la tarjeta como en el detalle, para mostrar mejor el postre dentro del recorte. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido.
+Implementa una identidad visual de repostería con Buttermilk (`#FFF2BA`) y Midnight Blue (`#0F3C65`) en variables CSS; las superficies crema y el acento caramelo completan los estados secundarios. La descripción del hero usa Buttermilk para mantener contraste sobre el fondo azul. La ilustración se reemplazó por una fotografía Unsplash de pastel de chocolate. El encuadre específico del tiramisú usa `object-position: center 85%` tanto en la tarjeta como en el detalle, para mostrar mejor el postre dentro del recorte. Poppins se usa para lectura, Playfair Display para títulos y Great Vibes aporta un acento caligráfico inspirado en «Velvet Moon». Las fuentes web tienen alternativas tipográficas para el uso offline. Incluye tarjetas responsivas, diálogo de receta, estados vacíos, avisos, foco visible y adaptación a pantallas pequeñas y a movimiento reducido; las etiquetas de dificultad estimada se distinguen con una nota aclaratoria en la vista del detalle.
 
 ### 6.3 `script.js`
 
-Implementa las ocho recetas locales, consulta la categoría Dessert y obtiene los detalles remotos con Fetch API, bajo demanda. Presenta doce resultados externos por bloque, búsqueda y filtros, favoritos, estados de carga/error y persistencia para uso offline. Normaliza y escapa el contenido remoto antes de insertarlo en el HTML. Para una receta externa sin duración calcula una estimación heurística y la distingue claramente de un valor publicado; permite abrir la fuente original segura. El botón de traducción transforma nombre, descripción, ingredientes y pasos bajo demanda, limita segmentos y consumo diario, informa errores y persiste el resultado sin destruir el original. Las recetas locales conservan sus duraciones, instrucciones, temporizador ajustable y modo cocina. El Service Worker se registra y cachea recursos esenciales, respuestas de recetas e imágenes.
+Implementa las ocho recetas locales, consulta la categoría Dessert y obtiene los detalles remotos con Fetch API, bajo demanda. Presenta doce resultados externos por bloque, búsqueda y filtros, favoritos, estados de carga/error y persistencia para uso offline. Normaliza y escapa el contenido remoto antes de insertarlo en el HTML. Los 52 niveles comprobados en la fuente se conservan con su frase original y URL; el detalle enlaza la evidencia. Para otras recetas sin dificultad publicada o verificada se calcula una estimación heurística y se identifica claramente como orientativa; el detalle se afina con ingredientes, pasos y técnicas, y la normalización de caché repara los valores antiguos. La duración estimada también se identifica como aproximada; los enlaces originales seguros permiten contrastar las recetas. El botón de traducción transforma nombre, descripción, ingredientes y pasos bajo demanda, limita segmentos y consumo diario, informa errores y persiste el resultado sin destruir el original. Las recetas locales conservan sus duraciones, instrucciones, temporizador ajustable y modo cocina. El Service Worker se registra y cachea recursos esenciales, respuestas de recetas e imágenes.
 
 ### 6.4 `manifest.json`
 
@@ -99,7 +104,7 @@ Establece nombre, nombre corto, idioma, ámbito, ruta de inicio, colores, visual
 
 ### 6.5 `sw.js`
 
-Versiona las cachés como `dulce-pausa-v14-recetas`, elimina versiones antiguas en la activación, reclama las páginas abiertas y administra solicitudes de navegación, recursos propios, imágenes de Unsplash y TheMealDB, así como sus respuestas JSON. La instalación de recursos esenciales es obligatoria; la precarga de fotografías es tolerante a fallos de red.
+Versiona la caché actual como `dulce-pausa-v28-dificultades-fuentes`, elimina versiones antiguas en la activación, reclama las páginas abiertas y administra solicitudes de navegación, recursos propios, imágenes de Unsplash y TheMealDB, así como sus respuestas JSON. La instalación de recursos esenciales es obligatoria; la precarga de fotografías es tolerante a fallos de red.
 
 ### 6.6 Recursos visuales
 
@@ -120,6 +125,7 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 - Integración Fetch API para lista y detalle, carga de doce tarjetas remotas por bloque y mensaje accesible ante errores.
 - Traducción manual bajo demanda de recetas, con advertencia de traducción automática, fallback al original, límite diario local y persistencia offline.
 - Estimación de tiempo externa identificada como aproximada, con enlace HTTPS a la receta original cuando está disponible.
+- Dificultad respaldada por 52 fuentes originales, con el término publicado y enlace de consulta; las otras 116 recetas del catálogo comprobado llevan niveles estimados y claramente diferenciados.
 - Caché versionada de recursos esenciales, respuestas TheMealDB e imágenes; lista externa y hasta veinte detalles recientes, traducción incluida, persisten en `localStorage`.
 
 ### 7.2 Pruebas y checklist PWA
@@ -140,6 +146,9 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 | Temporizador en segundo plano | El tiempo restante se calcula desde una hora objetivo, no contando ticks; se evita acumular deriva si el navegador limita intervalos |
 | Modo cocina | Implementado; la retención de pantalla utiliza Screen Wake Lock cuando el navegador la admite |
 | Estimación para receta internacional sin tiempo | Verificada en Æbleskiver: muestra 1 h 25 min como tiempo aproximado, usando instrucciones/ingredientes y sin atribuir la duración a la fuente |
+| Dificultad internacional investigada | 168 registros contrastados: 52 fuentes publican dificultad explícita, 93 no muestran nivel, 1 incluye “Easy” solo como tag y 22 casos no pudieron verificarse |
+| Cobertura visible de dificultad | Verificada localmente: las 168 recetas tienen nivel, ninguna queda «No especificada»; 52 muestran nivel contrastado y 116 una estimación marcada como aproximada |
+| Evidencia y estimaciones | Las páginas con nivel explícito guardan la frase original y enlace; las demás muestran nota de estimación y no atribuyen la dificultad a la fuente |
 | Tarjetas antes y después de abrir la receta | Verificado tras abrir y cerrar Æbleskiver: hay una estimación aproximada antes de consultar el detalle y el texto personalizado de la tarjeta permanece sin cambios al afinar el tiempo |
 | Descripciones y duplicados del catálogo | Verificados: las 168 recetas externas cargadas tienen descripción individual y tiempo inicial; cero títulos duplicados tras normalizar tildes y puntuación, y cero descripciones repetidas |
 | Enlace a fuente original | Verificado en Æbleskiver; enlace HTTPS se muestra tanto junto al tiempo como en las herramientas de idioma |
@@ -148,7 +157,7 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 | Disponibilidad offline | Verificada en navegador: con la conexión desactivada, el shell cargó, el Service Worker controló la página y Æbleskiver abrió con 10 ingredientes, 12 pasos y su traducción guardada |
 | Manifiesto con modo `standalone` e icono | Implementado |
 | Registro y control del Service Worker | Verificados en Pages: Service Worker activo, controlador presente y scope restringido a `https://luzu1202.github.io/PWA/` |
-| Actualización de shell y fotos | Caché local actual `dulce-pausa-v23-descripciones`; CSS `styles.css?v=tiramisu-87` y JavaScript `script.js?v=personalized-dessert-cards-v23` |
+| Actualización de shell y fotos | Caché local actual `dulce-pausa-v28-dificultades-fuentes`; CSS `styles.css?v=tiramisu-88` y JavaScript `script.js?v=dessert-difficulty-sources-v28` |
 | Publicación en GitHub Pages | Verificada: respuesta HTTP 200 en [Dulce Pausa](https://luzu1202.github.io/PWA/) |
 | Workflow de GitHub Actions | Ejecución [37101217479](https://github.com/luzu1202/PWA/actions/runs/37101217479) completada correctamente para el commit `9f7706445074054ef49a98ce52157ff7e23bd28a` |
 | Instalación del Service Worker en GitHub Pages | Verificada en la revisión publicada: scope `https://luzu1202.github.io/PWA/`, worker activo y cachés de la versión `dulce-pausa-v8` |
@@ -159,16 +168,16 @@ Los resultados describen el comportamiento implementado y las pruebas locales de
 | Contraste y paleta publicados | Hero: texto `rgb(255, 242, 186)` sobre fondo `rgb(15, 60, 101)`, contraste 10.06:1 |
 | Lighthouse / métricas de rendimiento | No ejecutado; no se reportan puntuaciones sintéticas |
 
-El Service Worker no puede operar al abrir `index.html` directamente mediante `file://`; debe servirse desde `localhost` o HTTPS. Las fotos locales y externas se guardan cuando se descargan, con un SVG local de respaldo en caso contrario. Las recetas adicionales dependen de la disponibilidad del proveedor; la traducción automática nueva necesita conectividad y está sujeta a la cuota gratuita, mientras las traducciones guardadas pueden leerse offline. La traducción y las estimaciones ya se desplegaron en GitHub Pages; las mejoras actuales de descripciones, deduplicación y estimación temprana se comprobaron localmente y todavía no se publican.
+El Service Worker no puede operar al abrir `index.html` directamente mediante `file://`; debe servirse desde `localhost` o HTTPS. Las fotos locales y externas se guardan cuando se descargan, con un SVG local de respaldo en caso contrario. Las recetas adicionales dependen de la disponibilidad del proveedor; la traducción automática nueva necesita conectividad y está sujeta a la cuota gratuita, mientras las traducciones guardadas pueden leerse offline. La traducción y las estimaciones de tiempo anteriores se desplegaron en GitHub Pages; las mejoras locales de descripciones, deduplicación, tiempos tempranos y dificultad con fuentes verificadas o estimaciones claramente identificadas todavía no se publican.
 
 ### 7.3 Auditoría de código y conclusiones
 
 La arquitectura no agrega dependencias de runtime ni servidor propio. El contenido remoto se normaliza, las cadenas se escapan antes de insertarse en el DOM, las solicitudes esperan como máximo doce segundos y los errores se hacen visibles sin desactivar el catálogo local. La UI carga doce tarjetas externas por bloque; las fotos se cargan de forma diferida. La lista y los últimos veinte detalles se guardan en `localStorage`; las respuestas y fotos descargadas también usan Cache API. En navegador local se comprobaron el catálogo, los detalles de Æbleskiver, su estimación, el enlace original, la traducción automática, la alternancia al original, el guardado de la traducción y la ausencia de términos técnicos en el texto visible. Con la conexión desactivada se volvió a cargar la aplicación y se abrió el detalle traducido guardado, confirmando el uso offline. Lighthouse e instalación en dispositivo físico no se ejecutaron. La auditoría técnica actualizada está en [AUDITORIA_PWA.md](./AUDITORIA_PWA.md).
 
-La revisión publicada previamente verificó el texto Buttermilk sobre el hero Midnight Blue, con contraste 10.06:1, y el encuadre del tiramisú (`object-position: center 85%`) en tarjeta y detalle. Esta revisión local incrementa la caché del Service Worker a `dulce-pausa-v23-descripciones` para incorporar descripciones personalizadas, estimaciones visibles antes de abrir la receta y deduplicación del catálogo; no invalida la versión desplegada hasta que se publique.
+La revisión publicada previamente verificó el texto Buttermilk sobre el hero Midnight Blue, con contraste 10.06:1, y el encuadre del tiramisú (`object-position: center 85%`) en tarjeta y detalle. Esta revisión local incrementa la caché del Service Worker a `dulce-pausa-v28-dificultades-fuentes` para incorporar los niveles publicados en fuentes originales y diferenciar las estimaciones del resto, además de las mejoras de tarjetas y deduplicación ya documentadas; no invalida la versión desplegada hasta que se publique.
 
-La publicación vigente antes de estos cambios corresponde al commit `95ec7c32ae2f10eafd074fca2b164ebe8555663d`; la validación y el despliegue finalizaron correctamente en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37180538713). Las correcciones de tarjetas y descripciones aquí documentadas son locales y todavía no se han enviado a GitHub.
+La publicación vigente antes de estos cambios corresponde al commit `95ec7c32ae2f10eafd074fca2b164ebe8555663d`; la validación y el despliegue finalizaron correctamente en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37180538713). Esta revisión de dificultad permanece en el entorno local y no se ha enviado a GitHub.
 
 ## 8. Resumen
 
-Dulce Pausa es una PWA para explorar ocho recetas locales y un catálogo internacional de postres. Permite buscar, guardar favoritos, consultar y traducir instrucciones, ver duraciones aproximadas claramente identificadas, usar un temporizador y activar el modo cocina. Se construyó con HTML, CSS y JavaScript nativos, un manifiesto instalable, un Service Worker con caché offline y recursos visuales locales de respaldo.
+Dulce Pausa es una PWA para explorar ocho recetas locales y un catálogo internacional de postres. Permite buscar, guardar favoritos, consultar y traducir instrucciones, ver tiempos estimados y niveles de dificultad respaldados por fuente cuando están disponibles, usar un temporizador y activar el modo cocina. Se construyó con HTML, CSS y JavaScript nativos, un manifiesto instalable, un Service Worker con caché offline y recursos visuales locales de respaldo.

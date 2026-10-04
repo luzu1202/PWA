@@ -121,6 +121,7 @@ h1, h2, h3, p { margin-top: 0; }
 .translation-tools .translation-note { flex-basis: 100%; margin: 0; }
 .detail-time-total a { display: inline-block; margin-top: 5px; color: var(--primary-color); font-size: 10px; }
 .translation-note { margin: 8px 0 0; color: var(--muted-color); font-size: 9px; line-height: 1.5; }
+.difficulty-note { margin: 7px 0 0; color: var(--muted-color); font-size: 9px; line-height: 1.5; }
 .recipe-detail-status { margin: 0 0 16px; color: var(--muted-color); font-size: 11px; }
 .recipe-detail-error { padding: 18px; border-radius: 7px; background: var(--surface-color); }
 .recipe-detail-error h2 { color: var(--primary-color); font-family: "Playfair Display", Georgia, serif; }

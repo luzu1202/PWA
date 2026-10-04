@@ -76,7 +76,7 @@ const recipes = [
 const placeholderImage = "assets/postre-placeholder.svg";
 const favoritesKey = "dulce-pausa-favorites";
 const MAX_TIMER_MINUTES = 24 * 60;
-let apiRecipes = loadCachedDesserts();
+let apiRecipes = [];
 const state = { category: "Todos", favoritesOnly: false, favorites: new Set(), activeRecipe: null, timerDurationSeconds: null, timerRemaining: null, timerEndTimestamp: null, timerInterval: null, wakeLock: null, toastTimeout: null, visibleApiCount: API_PAGE_SIZE, translationPending: false };
 const grid = document.querySelector("#recipe-grid");
 const searchInput = document.querySelector("#search-input");
@@ -233,6 +233,136 @@ function estimateSummaryTime(name) {
   return 60;
 }
 
+function estimateSummaryDifficulty(name) {
+  const dessertName = normalizeDessertName(name);
+  if (/souffle|croquembouche|kransekake|battenberg|kunafa|knafeh|stroopwafel|ensaimada|lamington|gateau|layered|tarte tatin|frangipan|croissant|baklava|paczki|chaj/.test(dessertName)) {
+    return "Avanzada";
+  }
+  if (/aebleskiver|cake|tart|pie|cheesecake|custard|creme brulee|crema catalana|roll|bun|doughnut|donut|fritter|pastry|pudding|modak|empanada|waffle|kuih|trifle|torte|loaf/.test(dessertName)) {
+    return "Intermedia";
+  }
+  return "Fácil";
+}
+
+function estimateRecipeDifficulty(recipe) {
+  const name = normalizeDessertName(recipe.name);
+  const recipeText = normalizeDessertName([...(recipe.ingredients || []), ...(recipe.steps || [])].join(" "));
+  const ingredientCount = recipe.ingredients?.length || 0;
+  const stepCount = recipe.steps?.length || 0;
+  const techniques = [
+    /temper(?:ing)? chocolate|temper(?:ing)? sugar|caramel(?:ize|ise|izing|ising)|make caramel/,
+    /whip .* stiff|stiff peaks|meringue|fold .* egg white|beat .* egg white/,
+    /laminat|puff pastry|phyllo|filo dough|knead|proof|prove|yeast/,
+    /water bath|bain marie|double boiler|custard|curd/,
+    /pipe|piping|layer|fill .* (?:cream|jam|chocolate|caramel)/,
+    /deep fry|fry .* batch|turn .* pancake|flip .* pancake/
+  ].filter((pattern) => pattern.test(recipeText)).length;
+
+  if (/souffle|croquembouche|kransekake|battenberg|kunafa|knafeh|stroopwafel|ensaimada|lamington|gateau|layered|tarte tatin|frangipan|croissant|baklava|paczki|chaj/.test(name)
+    || techniques >= 4
+    || (stepCount >= 8 && ingredientCount >= 12 && techniques >= 2)) {
+    return "Avanzada";
+  }
+  if (techniques >= 1
+    || (stepCount >= 6 && ingredientCount >= 9)
+    || /cake|tart|pie|cheesecake|custard|creme brulee|crema catalana|roll|bun|doughnut|donut|fritter|pastry|pudding|modak|empanada|waffle|kuih|trifle|torte|loaf/.test(name)) {
+    return "Intermedia";
+  }
+  return "Fácil";
+}
+
+const VERIFIED_DIFFICULTIES = new Map([
+  ["52854", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2907669/easy-pancakes"]],
+  ["52855", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/banana-pancakes"]],
+  ["52856", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/choc-chip-pecan-pie"]],
+  ["52857", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/1742633/pumpkin-pie"]],
+  ["52858", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2869/new-york-cheesecake"]],
+  ["52859", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2155644/key-lime-pie"]],
+  ["52860", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2121648/bestever-chocolate-raspberry-brownies"]],
+  ["52861", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/1759649/peanut-butter-cheesecake"]],
+  ["52862", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/1553651/peach-and-blueberry-grunt"]],
+  ["52886", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2686661/spotted-dick"]],
+  ["52889", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/4516/summer-pudding"]],
+  ["52890", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/13354/jam-rolypoly"]],
+  ["52893", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/778642/apple-and-blackberry-crumble"]],
+  ["52894", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/1120657/battenberg-cake"]],
+  ["52899", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2155640/dundee-cake"]],
+  ["52902", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/1940684/parkin"]],
+  ["52905", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/5816/hot-chocolate-souffls-with-chocolate-cream-sauce"]],
+  ["52909", ["A challenge", "Avanzada", "https://www.bbcgoodfood.com/recipes/tarte-tatin"]],
+  ["52910", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/chinon-apple-tarts"]],
+  ["52916", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/4778/pear-tarte-tatin"]],
+  ["52917", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/2540/white-chocolate-crme-brle"]],
+  ["52923", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/1837/canadian-butter-tarts"]],
+  ["52924", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/nanaimo-bars"]],
+  ["52988", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/classic-christmas-pudding"]],
+  ["52989", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/1826685/christmas-pudding-trifle"]],
+  ["52990", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/angela-nilsens-christmas-cake"]],
+  ["52991", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/2174/unbelievably-easy-mince-pies"]],
+  ["53007", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/honey-yogurt-cheesecake"]],
+  ["53046", ["Easy", "Fácil", "https://www.olivemagazine.com/recipes/baking-and-desserts/portuguese-custard-tarts/"]],
+  ["53082", ["Skill Level: Easy", "Fácil", "https://natashaskitchen.com/strawberries-romanoff-recipe/"]],
+  ["53100", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/blueberry-lemon-friands"]],
+  ["53101", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/isaacs-chocolate-coconut-squares"]],
+  ["53104", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/lamingtons"]],
+  ["53111", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/anzac-biscuits"]],
+  ["53148", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/crema-catalana"]],
+  ["53163", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/spanish-fig-almond-balls"]],
+  ["53170", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/chocolate-churros-with-chocolate-salted-caramel-sauce"]],
+  ["53271", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/walnut-date-honey-cake"]],
+  ["53276", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/apricot-turkish-delight-mess"]],
+  ["53279", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/baklava-with-spiced-nuts-ricotta-chocolate"]],
+  ["53292", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/piernik-polish-gingerbread"]],
+  ["53293", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/pistachio-cake"]],
+  ["53295", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/polish-chocolate-cake"]],
+  ["53298", ["More effort", "Intermedia", "https://www.bbcgoodfood.com/recipes/polish-doughnuts"]],
+  ["53303", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/raspberry-mousse"]],
+  ["53304", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/mini-bundt-cakes"]],
+  ["53316", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/beetroot-pancakes"]],
+  ["53406", ["Recipe Difficulty: Easy", "Fácil", "https://www.myalbanianfood.com/recipe/arra-te-mbushura-me-fik-walnut-stuffed-figs/"]],
+  ["53409", ["Recipe Difficulty: Easy", "Fácil", "https://www.myalbanianfood.com/recipe/albanian-shendetlie/"]],
+  ["53475", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/brazilian-chocolate-truffles-brigadeiro"]],
+  ["53477", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/coconut-quindim"]],
+  ["53485", ["Easy", "Fácil", "https://www.bbcgoodfood.com/recipes/brazilian-carrot-cake"]]
+]);
+apiRecipes = loadCachedDesserts();
+
+function getSummaryDifficulty(mealId, name) {
+  const published = VERIFIED_DIFFICULTIES.get(String(mealId));
+  if (published) {
+    return {
+      difficulty: published[1],
+      difficultyEstimated: false,
+      difficultySourceLevel: published[0],
+      difficultySourceUrl: published[2]
+    };
+  }
+  return {
+    difficulty: estimateSummaryDifficulty(name),
+    difficultyEstimated: true,
+    difficultySourceLevel: "",
+    difficultySourceUrl: ""
+  };
+}
+
+function getRecipeDifficulty(recipe) {
+  const published = VERIFIED_DIFFICULTIES.get(String(recipe.mealId || recipe.idMeal || ""));
+  if (published) {
+    return {
+      difficulty: published[1],
+      difficultyEstimated: false,
+      difficultySourceLevel: published[0],
+      difficultySourceUrl: published[2]
+    };
+  }
+  return {
+    difficulty: estimateRecipeDifficulty(recipe),
+    difficultyEstimated: true,
+    difficultySourceLevel: "",
+    difficultySourceUrl: ""
+  };
+}
+
 function parseDurations(text) {
   const durations = [];
   const pattern = /\b(\d{1,3})(?:\s*(?:-|–|to)\s*(\d{1,3}))?\s*(minutes?|mins?|hours?|hrs?)\b/gi;
@@ -364,7 +494,7 @@ function normalizeMealSummary(meal) {
     category: "Recetas internacionales",
     time: estimateSummaryTime(name.trim()),
     timeEstimated: true,
-    difficulty: "No especificada",
+    ...getSummaryDifficulty(mealId, name.trim()),
     description: dessertDescription(name.trim(), meal.area || meal.strArea),
     image: safeMealImage(meal.image || meal.strMealThumb),
     ingredients: []
@@ -464,7 +594,7 @@ function normalizeMealDetails(meal) {
       category: "Recetas internacionales",
       time: Number(meal.time) || estimateRecipeTime(meal),
       timeEstimated: true,
-      difficulty: "No especificada",
+      ...getRecipeDifficulty(meal),
       image: safeMealImage(meal.image),
       description: dessertDescription(meal.name, meal.area, meal.ingredients, meal.steps),
       sourceUrl: safeRecipeSource(meal.sourceUrl),
@@ -499,7 +629,7 @@ function normalizeMealDetails(meal) {
     time: 0,
     area: String(meal.strArea || ""),
     dessertType: String(meal.strCategory || ""),
-    difficulty: "No especificada",
+    ...getSummaryDifficulty(meal.idMeal, meal.strMeal.trim()),
     description: "",
     image: safeMealImage(meal.strMealThumb),
     ingredients,
@@ -513,6 +643,7 @@ function normalizeMealDetails(meal) {
   };
   recipe.description = dessertDescription(recipe.name, recipe.area, recipe.ingredients, recipe.steps);
   recipe.time = estimateRecipeTime(recipe);
+  Object.assign(recipe, getRecipeDifficulty(recipe));
   return recipe;
 }
 
@@ -531,7 +662,13 @@ function saveMealDetails(recipe) {
 
 async function fetchMealDetails(recipe) {
   const cached = loadCachedMealDetails()[recipe.mealId];
-  if (cached) return normalizeMealDetails(cached);
+  if (cached) {
+    const details = normalizeMealDetails(cached);
+    if (details.difficulty !== cached.difficulty
+      || details.difficultyEstimated !== cached.difficultyEstimated
+      || details.difficultySourceUrl !== cached.difficultySourceUrl) saveMealDetails(details);
+    return details;
+  }
   const data = await fetchJson(`${RECIPE_API_URL}${encodeURIComponent(recipe.mealId)}`);
   if (!Array.isArray(data.meals) || !data.meals.length) throw new Error("TheMealDB no encontró el detalle de este postre.");
   const details = normalizeMealDetails(data.meals[0]);
@@ -597,7 +734,7 @@ function renderRecipes() {
       <div class="card-body">
         <h3 class="card-title">${escapeHTML(recipe.name)}</h3>
         <p class="card-description">${escapeHTML(recipe.description)}</p>
-        <div class="card-meta"><span class="card-total-time">${recipe.time ? `${recipe.mealId ? "Aprox. " : ""}${escapeHTML(formatDuration(recipe.time))}` : "Tiempo por confirmar"}</span><span class="difficulty">${escapeHTML(recipe.difficulty)}</span></div>
+        <div class="card-meta"><span class="card-total-time">${recipe.time ? `${recipe.mealId ? "Aprox. " : ""}${escapeHTML(formatDuration(recipe.time))}` : "Tiempo por confirmar"}</span><span class="difficulty" title="${!recipe.mealId ? "Nivel editorial de la receta" : recipe.difficultyEstimated ? "Dificultad aproximada estimada por complejidad" : `Nivel publicado: ${recipe.difficultySourceLevel}. Ver fuente en el detalle.`}">${escapeHTML(recipe.difficulty)}${recipe.mealId ? recipe.difficultyEstimated ? " · aprox." : " · fuente" : ""}</span></div>
         <button class="card-open" type="button" data-open="${escapeHTML(recipe.id)}">Ver receta <span aria-hidden="true">→</span></button>
       </div>
     </article>`).join("");
@@ -648,13 +785,18 @@ function renderRecipeDetails(recipe) {
   const translationStatus = recipe.translation
     ? "Traducción automática: puede contener errores o conservar términos en inglés. Contrástala con la receta original."
     : "";
+  const difficultyNote = !recipe.mealId
+    ? ""
+    : recipe.difficultyEstimated
+    ? "Nivel orientativo según los ingredientes, los pasos y las técnicas descritas; no es una calificación publicada por la fuente."
+    : `Nivel publicado por la fuente: «${recipe.difficultySourceLevel}». <a href="${escapeHTML(recipe.difficultySourceUrl)}" target="_blank" rel="noopener noreferrer">Consultar fuente ↗</a>`;
   dialogContent.innerHTML = `
     <section class="detail-hero">
       <img class="detail-image" src="${escapeHTML(recipe.image)}" alt="${escapeHTML(displayName)}" data-fallback="${placeholderImage}">
       <div><p class="eyebrow">${escapeHTML(recipe.category.toUpperCase())}</p><h2 class="detail-title" id="dialog-title">${escapeHTML(displayName)}</h2>
       <p class="detail-description">${escapeHTML(displayDescription)}</p>
       ${recipe.time ? `<div class="detail-time-total"><span>${recipe.timeEstimated ? "Tiempo total aproximado" : "Tiempo total estimado"}</span><strong>${escapeHTML(formatDuration(recipe.time))}</strong><small>${recipe.timeEstimated ? "Estimación orientativa calculada a partir de los ingredientes, pasos y duraciones mencionadas; puede variar." : "Incluye preparación, cocción y los tiempos de reposo indicados."}${recipe.sourceUrl ? ` <a href="${escapeHTML(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">Ver receta original</a>` : ""}</small></div>` : ""}
-      <div class="detail-meta"><span>${escapeHTML(recipe.difficulty)}</span>${recipe.timerMinutes ? `<span>⏱ ${escapeHTML(recipe.timerLabel)}: ${recipe.timerMinutes} min</span>` : `<span>${recipe.mealId ? "Temporizador ajustable" : "Sin cocción cronometrada"}</span>`}</div></div>
+      <div class="detail-meta"><span title="${!recipe.mealId ? "Nivel editorial de la receta" : recipe.difficultyEstimated ? "Estimación orientativa según ingredientes, pasos y técnicas" : `Nivel publicado: ${recipe.difficultySourceLevel}`}">${escapeHTML(recipe.difficulty)}${recipe.mealId ? recipe.difficultyEstimated ? " · estimada" : " · fuente" : ""}</span>${recipe.timerMinutes ? `<span>⏱ ${escapeHTML(recipe.timerLabel)}: ${recipe.timerMinutes} min</span>` : `<span>${recipe.mealId ? "Temporizador ajustable" : "Sin cocción cronometrada"}</span>`}</div>${recipe.mealId ? `<p class="difficulty-note">${difficultyNote}</p>` : ""}</div>
     </section>
     ${recipe.mealId ? `<section class="translation-tools" aria-label="Idioma de la receta"><button class="text-button translation-button" id="toggle-translation" type="button" ${state.translationPending ? "disabled" : ""}>${state.translationPending ? "Traduciendo receta..." : recipe.translated ? "Ver original" : "Traducir al español"}</button><p class="translation-note" id="translation-status" role="status" aria-live="polite">${escapeHTML(translationStatus)}</p>${recipe.sourceUrl ? `<a class="source-recipe-link" href="${escapeHTML(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">Consultar la receta original ↗</a>` : ""}</section>` : ""}
     <div class="recipe-columns">
