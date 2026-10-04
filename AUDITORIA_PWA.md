@@ -10,7 +10,7 @@ Revisión de HTML, CSS, JavaScript, manifiesto y Service Worker, incluyendo el c
 
 ## Resultado ejecutivo
 
-**Estado: cambios locales funcionales y listos para revisión.** El navegador cargó 168 resultados de postres y el detalle de Æbleskiver. La vista calculó un tiempo aproximado de 1 h 25 min, enlazó la fuente HTTPS y tradujo 10 ingredientes y 12 pasos al español; la traducción quedó persistida en `localStorage` y se confirmó de nuevo después de recargar. Con la conexión desactivada se volvió a cargar el shell y se abrió el detalle guardado, incluida su traducción. El texto visible no contiene «API» ni «TheMealDB». Las modificaciones están en el entorno local; no se hizo push. La versión publicada en Pages continúa siendo la revisión anterior.
+**Estado: correcciones de tarjetas funcionales y listas para revisión local.** La versión publicada en el commit `95ec7c3` ya incluye traducción y estimaciones. En esta revisión, el navegador cargó 168 postres con tiempo aproximado desde la tarjeta y descripciones en español personalizadas; no detectó títulos ni descripciones repetidos. Al abrir y cerrar Æbleskiver, su descripción permaneció intacta mientras el tiempo se afinó de la estimación inicial a 1 h 25 min. Las correcciones actuales están solo en el entorno local y aún no se han enviado a GitHub.
 
 ## Hallazgos
 
@@ -77,6 +77,15 @@ Los siguientes resultados corresponden a la publicación previa, no a la integra
 - El Service Worker de la caché `dulce-pausa-v15-recetas` se instaló y controló la página. Con el navegador en modo sin conexión, la aplicación volvió a cargar desde el shell guardado y abrió Æbleskiver con sus 10 ingredientes, 12 pasos y traducción guardada. Después se probó la traducción `en|es-MX` y se incrementó a `dulce-pausa-v17-recetas` para versionar ese locale y el último ajuste de estilos. La caché v17 se activó y controló la página en navegador.
 - No se hizo push ni se comprobó la publicación de esta versión. La versión desplegada y las verificaciones históricas de Pages más arriba corresponden a revisiones anteriores.
 
+## Verificación de tarjetas y descripciones (2026-10-04)
+
+- Las tarjetas del catálogo internacional muestran una duración aproximada desde la carga inicial; el cálculo inicial se basa en el tipo de postre y se afina después de consultar las instrucciones.
+- Al abrir y cerrar Æbleskiver, la tarjeta conserva exactamente la descripción personalizada mientras recibe la estimación más precisa del detalle.
+- Se revisaron los 168 títulos externos cargados: cero nombres duplicados después de normalizar tildes, mayúsculas y puntuación, y cero descripciones repetidas. También se excluyen del catálogo remoto los nombres que ya figuran en las recetas locales.
+- Las descripciones en español se generan a partir del nombre, atributos del postre y, tras cargar el detalle, ingredientes, método y origen disponibles; no se sustituye el texto de la tarjeta por la región y categoría del servicio.
+- La versión final usa `dulce-pausa-v23-descripciones`; hay varias estructuras de redacción para reducir textos con apariencia repetida y la descripción se mantiene en español también al alternar la receta traducida. No se ha publicado esta corrección.
+- JavaScript y Service Worker pasaron `node --check`; `git diff --check` terminó sin observaciones. El navegador local confirmó que se carga `script.js?v=personalized-dessert-cards-v23`.
+
 ## Rendimiento, accesibilidad y mantenimiento
 
 - Las imágenes de tarjetas usan carga diferida; el layout de las tarjetas reserva altura para reducir desplazamientos al cargar.
@@ -84,7 +93,7 @@ Los siguientes resultados corresponden a la publicación previa, no a la integra
 - Las familias Poppins, Playfair Display y Great Vibes se solicitan a Google Fonts; si no están disponibles, se utilizan las familias de reserva del sistema.
 - La interfaz ofrece etiquetas accesibles, foco visible, estados de botones y adaptación a movimiento reducido.
 - Los recursos esenciales se cachean antes de activar la nueva versión; la precarga remota de imágenes tolera fallos y no bloquea el shell.
-- La caché local del Service Worker se versiona como `dulce-pausa-v17-recetas`; incluye caché de respuestas JSON de TheMealDB e imágenes descargadas. Las versiones de CSS y JavaScript se actualizan con query strings en el shell.
+- La caché de desarrollo actual del Service Worker se versiona como `dulce-pausa-v23-descripciones`; incluye respuestas del catálogo e imágenes descargadas. La publicación previa conserva la versión que se desplegó con el commit `95ec7c3`.
 - El HTML de datos externos se escapa antes de renderizarse, y las URL de imágenes remotas se restringen a HTTPS en el host de TheMealDB.
 - Las solicitudes Fetch API se limitan a doce segundos; el fallo o el rechazo de la API no impide usar las recetas propias.
 - El modo cocina usa Screen Wake Lock cuando está disponible y comunica la limitación cuando el navegador no lo permite.
@@ -92,4 +101,4 @@ Los siguientes resultados corresponden a la publicación previa, no a la integra
 
 ## Conclusión
 
-La revisión publicada anteriormente (`9f77064`) fue validada en GitHub Actions. La integración nueva del catálogo, traducción, tiempo estimado, caché `dulce-pausa-v17-recetas` y documentos se comprobaron localmente y no se han subido a GitHub. Se verificaron en navegador el catálogo, el detalle, la traducción guardada, la estimación, la alternancia de idioma y el funcionamiento offline del shell/detalle; además, se validó la activación final de la caché v17 y la sintaxis. La variante `en|es-MX` del traductor se confirmó con el ejemplo de ingrediente (`2 cups flour` → `2 tazas de harina`). No se ejecutaron Lighthouse, instalación física ni comprobación individual de cada imagen remota. Se recomienda revisar traducciones automáticas y tiempos orientativos antes de cocinar.
+La revisión publicada anteriormente (`95ec7c3`) fue validada en [GitHub Actions](https://github.com/luzu1202/PWA/actions/runs/37180538713), que desplegó traducción y estimaciones. Las correcciones actuales de descripciones, tiempos tempranos, deduplicación y caché `dulce-pausa-v23-descripciones` se comprobaron localmente y no se han enviado a GitHub. Se verificaron en navegador la ausencia de duplicados, el mantenimiento de la descripción de tarjeta después de abrir/cerrar el detalle, el tiempo aproximado y `node --check`. No se ejecutaron Lighthouse, instalación física ni comprobación individual de cada imagen remota.

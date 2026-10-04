@@ -120,6 +120,119 @@ function safeRecipeSource(value) {
   }
 }
 
+function normalizeDessertName(value) {
+  return String(value || "")
+    .replace(/æ/gi, "ae")
+    .replace(/ß/g, "ss")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("es")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function spanishOrigin(area) {
+  const originNames = {
+    American: "Estados Unidos", Australian: "Australia", British: "Reino Unido", Canadian: "Canadá",
+    Chinese: "China", Croatian: "Croacia", Danish: "Dinamarca", Dutch: "Países Bajos",
+    Egyptian: "Egipto", Filipino: "Filipinas", French: "Francia", Greek: "Grecia",
+    Indian: "India", Irish: "Irlanda", Italian: "Italia", Jamaican: "Jamaica",
+    Japanese: "Japón", Malaysian: "Malasia", Mexican: "México", Moroccan: "Marruecos",
+    Norway: "Noruega", Norwegian: "Noruega", Polish: "Polonia", Portuguese: "Portugal", Russian: "Rusia",
+    Spanish: "España", Swedish: "Suecia", Thai: "Tailandia", Tunisian: "Túnez",
+    Turkish: "Turquía", Vietnamese: "Vietnam"
+  };
+  const value = String(area || "").trim();
+  return originNames[value] || value;
+}
+
+function dessertDescription(name, area = "", ingredients = [], steps = []) {
+  const searchText = normalizeDessertName([name, ...ingredients].join(" "));
+  const origin = String(area || "").trim();
+  let flavor;
+  let texture;
+
+  if (/alfajor/.test(searchText)) {
+    flavor = "galletas tiernas con un relleno dulce de leche";
+    texture = "suave y delicada";
+  } else if (/aebleskiver/.test(searchText)) {
+    flavor = "el encanto de los panqueques daneses de centro esponjoso";
+    texture = "dorada por fuera y esponjosa por dentro";
+  } else if (/chocolate|cocoa/.test(searchText)) {
+    flavor = "cacao intenso y notas de chocolate";
+    texture = "intensa y reconfortante";
+  } else if (/lemon|lime|citron/.test(searchText)) {
+    flavor = "cítricos frescos y un equilibrio entre dulce y ácido";
+    texture = "ligera y refrescante";
+  } else if (/apple|pear|peach|plum|mango|strawberr|raspberr|blueberr|berry|fruit/.test(searchText)) {
+    flavor = "fruta dulce y aromas naturales";
+    texture = "jugosa y llena de color";
+  } else if (/caramel|flan|dulce de leche|toffee/.test(searchText)) {
+    flavor = "caramelo suave y un dulzor envolvente";
+    texture = "sedosa y cremosa";
+  } else if (/coffee|espresso|tiramisu/.test(searchText)) {
+    flavor = "café aromático y crema delicada";
+    texture = "cremosa con un toque tostado";
+  } else if (/coconut/.test(searchText)) {
+    flavor = "coco y dulzor tropical";
+    texture = "tierna y fragante";
+  } else if (/cinnamon|spice|ginger/.test(searchText)) {
+    flavor = "especias cálidas y un dulzor casero";
+    texture = "aromática y reconfortante";
+  } else if (/cheese|cheesecake|mascarpone/.test(searchText)) {
+    flavor = "queso suave y un delicado toque dulce";
+    texture = "cremosa y delicada";
+  } else if (/cookie|biscuit|macaron|brownie|bar/.test(searchText)) {
+    flavor = "masa horneada y un dulzor perfecto para acompañar el café";
+    texture = "dorada y fácil de compartir";
+  } else if (/pancake|waffle|crepe|doughnut|donut|churro|fritter/.test(searchText)) {
+    flavor = "masa recién preparada con un acabado dulce";
+    texture = "dorada y esponjosa";
+  } else {
+    const firstIngredient = String(ingredients[0] || "")
+      .replace(/^[\d\s./½¼¾⅓⅔]+/, "")
+      .replace(/^(?:cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|grams?|g|milliliters?|ml)\s+/i, "")
+      .trim();
+    flavor = firstIngredient
+      ? `${firstIngredient} y una combinación dulce de inspiración casera`
+      : "una combinación dulce propia de la repostería tradicional";
+    texture = /bake|oven/.test(normalizeDessertName(steps.join(" "))) ? "dorada y reconfortante" : "delicada y pensada para disfrutar sin prisa";
+  }
+
+  const translatedOrigin = spanishOrigin(origin);
+  const location = translatedOrigin || "distintas partes del mundo";
+  const styles = [
+    () => `${name} es un postre de inspiración ${location}, con ${flavor} y una textura ${texture}.`,
+    () => `Prueba ${name}: una preparación con ${flavor}, textura ${texture} e inspiración de ${location}.`,
+    () => `Con inspiración de ${location}, ${name} combina ${flavor} y una textura ${texture} en cada porción.`,
+    () => `Si se te antoja algo dulce, ${name} reúne ${flavor} en una preparación de textura ${texture}, inspirada en ${location}.`,
+    () => `${name} lleva a la mesa sabores de ${location}: ${flavor} y una textura ${texture} para disfrutar sin prisa.`,
+    () => `Cada porción de ${name} ofrece ${flavor} y una textura ${texture}, con inspiración en la repostería de ${location}.`
+  ];
+  const styleIndex = [...normalizeDessertName(name)].reduce((total, character) => total + character.charCodeAt(0), 0) % styles.length;
+  return styles[styleIndex]();
+}
+
+function uniqueDesserts(desserts) {
+  const seen = new Set(recipes.map((recipe) => normalizeDessertName(recipe.name)));
+  return desserts.filter((dessert) => {
+    const key = normalizeDessertName(dessert.name);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function estimateSummaryTime(name) {
+  const dessertName = normalizeDessertName(name);
+  if (/ice cream|gelato|tiramisu|cheesecake|mousse|pudding|trifle|parfait|frozen/.test(dessertName)) return 180;
+  if (/pie|tart|cake|torte|loaf|brownie/.test(dessertName)) return 75;
+  if (/cookie|biscuit|macaron|bar|alfajor/.test(dessertName)) return 50;
+  if (/pancake|waffle|crepe|aebleskiver/.test(dessertName)) return 40;
+  if (/churro|doughnut|donut|fritter|beignet/.test(dessertName)) return 55;
+  return 60;
+}
+
 function parseDurations(text) {
   const durations = [];
   const pattern = /\b(\d{1,3})(?:\s*(?:-|–|to)\s*(\d{1,3}))?\s*(minutes?|mins?|hours?|hrs?)\b/gi;
@@ -226,18 +339,17 @@ async function translateParagraph(text) {
 
 async function translateMealRecipe(recipe) {
   if (!navigator.onLine) throw new Error("Conéctate a internet para traducir esta receta.");
-  const sourceTexts = [recipe.name, recipe.description, ...recipe.ingredients, ...recipe.steps];
+  const sourceTexts = [recipe.name, ...recipe.ingredients, ...recipe.steps];
   const characterCount = sourceTexts.flatMap(splitTranslationSegments)
     .reduce((total, segment) => total + segment.length, 0);
   reserveTranslationCharacters(characterCount);
   const translateList = (items) => Promise.all(items.map(translateParagraph));
-  const [name, description, ingredients, steps] = await Promise.all([
+  const [name, ingredients, steps] = await Promise.all([
     translateParagraph(recipe.name),
-    translateParagraph(recipe.description),
     translateList(recipe.ingredients),
     translateList(recipe.steps)
   ]);
-  return { name, description, ingredients, steps };
+  return { name, description: recipe.description, ingredients, steps };
 }
 
 function normalizeMealSummary(meal) {
@@ -250,9 +362,10 @@ function normalizeMealSummary(meal) {
     mealId,
     name: name.trim(),
     category: "Recetas internacionales",
-    time: null,
+    time: estimateSummaryTime(name.trim()),
+    timeEstimated: true,
     difficulty: "No especificada",
-    description: "Una receta dulce de distintas partes del mundo. Abre para consultar ingredientes e instrucciones.",
+    description: dessertDescription(name.trim(), meal.area || meal.strArea),
     image: safeMealImage(meal.image || meal.strMealThumb),
     ingredients: []
   };
@@ -264,7 +377,7 @@ function loadCachedDesserts() {
     if (!stored) return [];
     const parsed = JSON.parse(stored);
     if (!Array.isArray(parsed)) throw new TypeError("La caché local de postres no tiene el formato esperado.");
-    return parsed.map(normalizeMealSummary).filter(Boolean);
+    return uniqueDesserts(parsed.map(normalizeMealSummary).filter(Boolean));
   } catch (error) {
     console.error("No se pudieron recuperar los postres guardados para uso offline.", error);
     return [];
@@ -310,7 +423,7 @@ async function loadDesserts() {
   try {
     const data = await fetchJson(DESSERTS_API_URL);
     if (!Array.isArray(data.meals)) throw new TypeError("La respuesta de TheMealDB no contiene la lista esperada de postres.");
-    apiRecipes = data.meals.map(normalizeMealSummary).filter(Boolean);
+    apiRecipes = uniqueDesserts(data.meals.map(normalizeMealSummary).filter(Boolean));
     state.visibleApiCount = API_PAGE_SIZE;
     saveCachedDesserts(apiRecipes);
     renderCategories();
@@ -353,6 +466,7 @@ function normalizeMealDetails(meal) {
       timeEstimated: true,
       difficulty: "No especificada",
       image: safeMealImage(meal.image),
+      description: dessertDescription(meal.name, meal.area, meal.ingredients, meal.steps),
       sourceUrl: safeRecipeSource(meal.sourceUrl),
       translation: meal.translation && Array.isArray(meal.translation.ingredients) && Array.isArray(meal.translation.steps)
         ? meal.translation
@@ -383,8 +497,10 @@ function normalizeMealDetails(meal) {
     name: meal.strMeal.trim(),
     category: "Recetas internacionales",
     time: 0,
+    area: String(meal.strArea || ""),
+    dessertType: String(meal.strCategory || ""),
     difficulty: "No especificada",
-    description: [meal.strArea, meal.strCategory].filter(Boolean).join(" · ") || "Receta dulce internacional.",
+    description: "",
     image: safeMealImage(meal.strMealThumb),
     ingredients,
     steps,
@@ -395,6 +511,7 @@ function normalizeMealDetails(meal) {
     translated: false,
     timeEstimated: true
   };
+  recipe.description = dessertDescription(recipe.name, recipe.area, recipe.ingredients, recipe.steps);
   recipe.time = estimateRecipeTime(recipe);
   return recipe;
 }
@@ -512,7 +629,9 @@ async function showRecipe(id) {
       announce("No fue posible cargar los ingredientes y pasos.");
       return;
     }
-    apiRecipes = apiRecipes.map((item) => item.id === recipe.id ? { ...item, ...recipe } : item);
+    apiRecipes = apiRecipes.map((item) => item.id === recipe.id
+      ? { ...item, ...recipe, description: item.description }
+      : item);
     renderRecipes();
   }
   renderRecipeDetails(recipe);
@@ -523,7 +642,7 @@ async function showRecipe(id) {
 function renderRecipeDetails(recipe) {
   const translation = recipe.translated ? recipe.translation : null;
   const displayName = translation?.name || recipe.name;
-  const displayDescription = translation?.description || recipe.description;
+  const displayDescription = recipe.mealId ? recipe.description : translation?.description || recipe.description;
   const displayIngredients = translation?.ingredients || recipe.ingredients;
   const displaySteps = translation?.steps || recipe.steps;
   const translationStatus = recipe.translation

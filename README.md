@@ -9,12 +9,12 @@
 ## Funcionalidades
 
 - Catálogo de ocho recetas exclusivamente de postres, con fotografía, categoría, dificultad y tiempo total estimado.
-- Catálogo adicional de postres internacionales, cargado con `fetch()`; los detalles e ingredientes se consultan bajo demanda.
+- Catálogo adicional de postres internacionales, cargado con `fetch()`, con descripciones en español personalizadas según el postre y sin títulos duplicados; los detalles e ingredientes se consultan bajo demanda.
 - Resultados en bloques de 12, indicador de carga/errores y botón para actualizar las recetas.
 - Búsqueda en tiempo real por nombre en el catálogo y por ingredientes en las recetas locales; los ingredientes remotos se consultan al abrir el detalle.
 - Vista de receta con ingredientes, pasos, tiempos de reposo descritos por separado y temporizador ajustable para la fase activa.
 - Botón para traducir nombre, descripción, ingredientes y pasos al español. La traducción se guarda junto al detalle para consultarla offline; requiere conexión la primera vez, es automática y puede contener errores.
-- Estimación orientativa del tiempo de recetas adicionales calculada con los pasos, las cantidades de ingredientes y las duraciones expresamente mencionadas. No equivale a un tiempo verificado por la fuente. Cuando existe un enlace seguro, la vista permite contrastar la receta original.
+- Tiempo aproximado visible desde la tarjeta, primero orientado por el tipo de postre y luego afinado al consultar sus instrucciones. No equivale a un tiempo verificado por la fuente. Cuando existe un enlace seguro, la vista permite contrastar la receta original.
 - Favoritos guardados en `localStorage`.
 - Modo cocina, con solicitud de Screen Wake Lock en los navegadores compatibles.
 - Manifiesto instalable y Service Worker con caché del shell y precarga de fotografías.
@@ -67,4 +67,4 @@ La aplicación carga el catálogo internacional con `fetch()` y pide los ingredi
 
 La traducción automática inglés-español latinoamericano se solicita solo cuando se pulsa **Traducir al español**. Se envían segmentos breves del texto de la receta al servicio de traducción, no información personal. Se registra localmente el uso diario para respetar el límite anónimo publicado por el proveedor; si hay error, se alcanza el límite o falta conexión, el texto original permanece disponible. Las traducciones se identifican como automáticas.
 
-Las fotografías se sirven desde Unsplash y el catálogo desde TheMealDB; las fuentes tipográficas se sirven desde Google Fonts. Si una fuente externa no está disponible, se muestran imágenes de respaldo y se conserva el catálogo local. Las actualizaciones de esta versión están solo en el entorno local: no se han publicado ni enviado a GitHub.
+Las fotografías se sirven desde Unsplash y el catálogo desde TheMealDB; las fuentes tipográficas se sirven desde Google Fonts. Si una fuente externa no está disponible, se muestran imágenes de respaldo y se conserva el catálogo local. La traducción y las estimaciones se publicaron en GitHub Pages; las correcciones más recientes de descripciones personalizadas, tiempos visibles desde la tarjeta y eliminación de duplicados permanecen en el entorno local.
